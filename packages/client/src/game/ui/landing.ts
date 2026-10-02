@@ -156,7 +156,7 @@ function sliderHtml(id: string, slides: Slide[]) {
 /** Wires one slider: its 3D scene on one side, the text and controls on the other. */
 function slider(root: HTMLElement, id: string, slides: Slide[], materials: Materials) {
   const el = root.querySelector<HTMLElement>(`[data-slider="${id}"]`)!;
-  const vignette = new Vignette(el.querySelector('.slider-stage')!, materials, 0.82);
+  const vignette = new Vignette(el.querySelector('.slider-stage')!, materials, 0.9);
   let index = 0;
   const show = (i: number) => {
     index = (i + slides.length) % slides.length;
