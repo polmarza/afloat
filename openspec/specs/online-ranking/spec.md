@@ -45,12 +45,17 @@ El ranking SHALL tener dos clasificaciones por jugador: total acumulado y mejor 
 - THEN aparece una sola fila con el nombre "Anita"
 
 ### Requirement: Dónde se ve
-La portada SHALL tener una sección Ranking con las dos clasificaciones (top 20) que resalte tu fila y muestre tu puesto si no estás en el top. La sala de espera SHALL indicar si la partida contará para el ranking. Al terminar una partida online, la pantalla final SHALL mostrar los puntos sumados y tus puestos, o por qué no cuenta.
+La portada SHALL tener una sección Ranking con las dos clasificaciones (top 20) que resalte tu fila y muestre tu puesto si no estás en el top. Mientras nadie esté en el ranking (o no se pueda cargar), la sección y su enlace del menú MUST NOT mostrarse. La sala de espera SHALL indicar si la partida contará para el ranking. Al terminar una partida online, la pantalla final SHALL mostrar los puntos sumados y tus puestos, o por qué no cuenta.
 
 #### Scenario: Portada
 - GIVEN partidas online terminadas
 - WHEN se abre la portada y se va a Ranking
 - THEN se ven las dos clasificaciones con tu fila resaltada
+
+#### Scenario: Ranking vacío
+- GIVEN que todavía no ha terminado ninguna partida que puntúe
+- WHEN se abre la portada
+- THEN no aparecen ni la sección Ranking ni su enlace en el menú
 
 #### Scenario: Aviso en la sala
 - GIVEN una sala de espera con Ana y Luis

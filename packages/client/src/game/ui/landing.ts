@@ -37,7 +37,7 @@ export function showLanding(root: HTMLElement, materials: Materials, portraits: 
   root.innerHTML = `
     <nav class="landing-nav">
       <button class="landing-logo" data-goto="top">AFLOAT</button>
-      <div class="landing-links">${SECTIONS.map((s) => `<button data-goto="${s.id}">${s.name}</button>`).join('')}</div>
+      <div class="landing-links">${SECTIONS.map((s) => `<button data-goto="${s.id}" ${s.id === 'ranking' ? 'hidden' : ''}>${s.name}</button>`).join('')}</div>
       <a class="landing-github" href="${REPO_URL}" target="_blank" rel="noopener" aria-label="Código en GitHub">${GITHUB_ICON}<span>GitHub</span></a>
       <button class="primary" data-play>Jugar</button>
     </nav>
@@ -114,7 +114,7 @@ export function showLanding(root: HTMLElement, materials: Materials, portraits: 
       }).join('')}</div>
     </section>
 
-    <section id="ranking" class="landing-section">
+    <section id="ranking" class="landing-section" hidden>
       <div class="landing-kicker">RANKING ONLINE</div>
       <h2>Quién sale a flote más veces</h2>
       <p class="muted">${RANKING_INTRO}</p>
@@ -132,7 +132,12 @@ export function showLanding(root: HTMLElement, materials: Materials, portraits: 
   const hero = new Vignette(root.querySelector('[data-stage="hero"]')!, materials, 0.92);
   void hero.play(heroScene, false);
   vignettes = [hero, slider(root, 'steps', STEPS, materials), slider(root, 'rooms', ROOM_SLIDES, materials)];
-  void showRanking(root.querySelector<HTMLElement>('.ranking')!);
+  // The ranking only shows up once someone is in it.
+  void showRanking(root.querySelector<HTMLElement>('.ranking')!).then((filled) => {
+    if (!filled) return;
+    root.querySelector<HTMLElement>('#ranking')!.hidden = false;
+    root.querySelector<HTMLElement>('[data-goto="ranking"]')!.hidden = false;
+  });
 
   root.onclick = (e) => {
     const t = (e.target as HTMLElement).closest<HTMLElement>('button');

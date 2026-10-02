@@ -12,8 +12,8 @@ const BOARDS: { id: Board; name: string; points: string }[] = [
   { id: 'best', name: 'Mejor partida', points: 'Mejor puntuación' },
 ];
 
-/** Loads the ranking into `root` (the section's content) and wires its tabs. */
-export async function showRanking(root: HTMLElement) {
+/** Loads the ranking into `root` (the section's content) and wires its tabs. True if anyone is in it. */
+export async function showRanking(root: HTMLElement): Promise<boolean> {
   let board: Board = 'total';
   let data: RankingResponse | null = null;
   const render = () => {
@@ -47,8 +47,10 @@ export async function showRanking(root: HTMLElement) {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     data = (await res.json()) as RankingResponse;
     render();
+    return data.total.length > 0;
   } catch {
     root.innerHTML = '<p class="muted">No se ha podido cargar el ranking ahora mismo.</p>';
+    return false;
   }
 }
 
