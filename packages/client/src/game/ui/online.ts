@@ -284,6 +284,7 @@ function renderLobby(root: HTMLElement, portraits: Portraits, room: RoomView, yo
       <p class="muted">Pasa el código o el enlace a quienes vayan a jugar. Cada uno elige su personaje.</p>
       <h3>Tripulación <span class="muted">${room.seats.length}/${BALANCE.crew.max}</span></h3>
       <div class="lobby-seats">${seats}</div>
+      <p class="lobby-ranked ${room.ranked ? 'on' : ''}">${room.ranked ? 'Esta partida cuenta para el ranking online.' : 'Con tripulantes de la máquina, la partida no cuenta para el ranking.'}</p>
       <h3>Tu personaje</h3>
       <div class="lobby-roles">${roles}</div>
       <label class="name-label lobby-name">Tu nombre <input id="lobby-name" value="${escapeHtml(typed ?? me.name)}" maxlength="${MAX_NAME_LENGTH}" /></label>

@@ -15,7 +15,11 @@ export interface RemoteEvents {
   snapshot: () => void;
   error: (code: RoomErrorCode) => void;
   status: (status: ConnectionStatus) => void;
+  /** The game just finished: how it went into the ranking. */
+  ranked: (result: RankedMessage) => void;
 }
+
+export type RankedMessage = Extract<ServerMessage, { type: 'ranked' }>;
 
 /** Creates a room on the server and returns its code. */
 export async function createRoom(): Promise<string> {
@@ -34,6 +38,8 @@ export class RemoteSession implements Session {
   state!: GameState;
   startEvents: GameEvent[] = [];
   actions: Action[] = [];
+  /** How the last finished game went into the ranking (it may arrive just before or after the end screen). */
+  lastRanked: RankedMessage | null = null;
 
   private ws: WebSocket | null = null;
   private seq = 0;
@@ -150,6 +156,7 @@ export class RemoteSession implements Session {
         this.startEvents = msg.startEvents;
         this.actions = [];
         this.seq = msg.seq;
+        this.lastRanked = null;
         this.emit('started');
         break;
       case 'snapshot':
@@ -179,6 +186,10 @@ export class RemoteSession implements Session {
         for (const l of this.listeners) l(played);
         break;
       }
+      case 'ranked':
+        this.lastRanked = msg;
+        this.emit('ranked', msg);
+        break;
       case 'rejected':
         this.failPending(msg.reason);
         break;

@@ -66,9 +66,10 @@ Objetivo: cada amigo juega desde su casa mientras hablan por Discord.
 - [x] `packages/server`: Cloudflare Worker + Durable Object por sala que ejecuta el motor (incluidas las máquinas, que juegan en el servidor).
 - [x] Salas por enlace o código con anfitrión (crea la partida, comparte el enlace, elige dificultad y máquinas, empieza); reconexión si alguien se cae; si el anfitrión se va, pasa a otro jugador.
 - [x] `RemoteSession` en el cliente: WebSocket, botones bloqueados fuera de tu turno, identificador secreto por navegador + nombre editable.
-- [ ] Ranking online en D1, calculado por el servidor al terminar la partida (no se acepta ninguna puntuación enviada por el navegador). Reglas decididas:
+- [x] Ranking online en D1 (portada, sala de espera y pantalla final), calculado por el servidor al terminar la partida (no se acepta ninguna puntuación enviada por el navegador). Reglas decididas:
   - La puntuación es **compartida**: cada jugador humano recibe la puntuación de la partida, sin bonus ni penalización personal (quien se sacrifica no sale perjudicado).
-  - Puntúan solo las partidas con **todos los asientos humanos** y terminadas (no las abandonadas).
+  - Puntúan solo las partidas con **todos los asientos humanos** y terminadas (no las abandonadas). Si la máquina juega por alguien desconectado, puntúa igual.
+  - Cada jugador es su navegador (clave secreta), con el último nombre usado; un único ranking global.
   - Dos clasificaciones por jugador: **total acumulado** y **mejor partida**.
   - La cápsula salva siempre a 1 persona (ya implementado), para que la puntuación no dependa del número de jugadores.
 - [x] Cada jugador solo controla su personaje; los demás ven la acción en directo. Si alguien se desconecta en su turno, el anfitrión puede dejar que juegue la máquina hasta que vuelva.

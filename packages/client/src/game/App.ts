@@ -9,7 +9,7 @@ import { FLOODED_GUIDE, ROOM_GUIDE, ROOM_NAMES, SYSTEM_NAMES } from '@afloat/sha
 import { scoreGame, type Action, type GameEvent, type GameState, type NewGame } from '@afloat/shared/engine';
 import { CrewFigure } from './crew';
 import { LocalSession, type PlayedAction, type Session } from './session';
-import type { RemoteSession } from './online/remoteSession';
+import type { RankedMessage, RemoteSession } from './online/remoteSession';
 import { Materials } from './materials';
 import { STYLE } from './styles';
 import { ease, Tweens } from './tweens';
@@ -176,6 +176,7 @@ export class App {
       session.on('room', () => this.session === session && this.world && this.hud.render(this.state, this.busy));
       // Back after a lost connection: the whole game again, without animating what was missed.
       session.on('snapshot', () => this.session === session && this.world && void this.begin(session, false));
+      session.on('ranked', (msg) => this.hud.setEndRanking(rankingText(msg)));
     }
     this.hud.setSeats({
       controls: (id) => session.controls(id),
@@ -437,6 +438,7 @@ export class App {
         replay: 'Otra partida',
         setup: 'Salir de la sala',
         note: remote.isHost ? '' : 'Quien ha creado la sala puede empezar otra partida.',
+        ranking: remote.lastRanked ? rankingText(remote.lastRanked) : 'Guardando en el ranking…',
       });
       return;
     }
@@ -864,6 +866,16 @@ export class App {
     this.moveGoal = cell;
     void this.dispatch({ type: 'MOVE', playerId: p.id, toRoomId: hit.room! });
   }
+}
+
+/** End screen line about the online ranking. */
+function rankingText(msg: RankedMessage) {
+  if (!msg.counted) {
+    return msg.reason === 'bots'
+      ? '<span class="muted">Con tripulantes de la máquina, la partida no cuenta para el ranking.</span>'
+      : '<span class="muted">No se ha podido guardar en el ranking.</span>';
+  }
+  return `<b>RANKING</b> <em>+${msg.points}</em> puntos · puesto ${msg.total.rank} en total · puesto ${msg.best.rank} en mejor partida`;
 }
 
 function isVisible(o: THREE.Object3D) {

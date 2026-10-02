@@ -36,3 +36,9 @@ export function saveName(name: string) {
     // Not remembered: the player types it next time.
   }
 }
+
+/** SHA-256 (hex) of this browser's key: how the online ranking knows which row is yours. Not secret. */
+export async function playerFingerprint() {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(playerKey()));
+  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}

@@ -228,6 +228,13 @@ Las 10 mejores partidas. Cada récord (`GameRecord`, versión `v: 1`) guarda `da
 - **Mensajes**: ver `ClientMessage` y `ServerMessage`. Cada acción aceptada lleva `seq` (1, 2, 3…).
 - **Navegador**: `afloat.playerKey` (clave secreta) y `afloat.playerName` (último nombre) en `localStorage`.
 
+## Ranking online (D1 `afloat`, `packages/server/migrations/`)
+
+- **`players`**: `id` (SHA-256 de la clave del navegador), `name` (último usado), `total`, `best`, `games`, `total_at` y `best_at` (desempate: a igualdad de puntos, antes quien llegó antes; quienes llegan en la misma partida comparten puesto).
+- **`games`**: `id` (`CÓDIGO-n`), `room`, `ended_at`, `difficulty`, `status`, `score`, `rounds`, `setup` y `actions` (JSON, para reproducirla con `replay()`).
+- **`game_players`**: `game_id`, `player_id`, `name`, `role`.
+- Solo puntúan las partidas online terminadas que empezaron con todos los asientos humanos (`RoomView.ranked`). Cada humano suma la puntuación de la partida.
+
 ## Políticas de acceso
 
 - Local: sin usuarios.

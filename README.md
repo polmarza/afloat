@@ -23,6 +23,7 @@ Una alarma os despierta dentro de un submarino que se hunde. Las salas están a 
 - **Dos salidas:** cápsula de escape (una plaza) o emerger el submarino.
 - **Salas especiales:** invernadero, laboratorio y cantina.
 - **Tres dificultades** y puntuación con desglose. Los récords se guardan en el navegador.
+- **Ranking online:** las partidas online con todos los tripulantes humanos suman a una clasificación común (total y mejor partida).
 
 ![El submarino a mitad de partida, con la cápsula de escape a la derecha](docs/media/submarino.jpg)
 
@@ -33,7 +34,7 @@ Una alarma os despierta dentro de un submarino que se hunde. Las salas están a 
 
 ## Estado
 
-Jugable de principio a fin en local y online (salas privadas con código), con una portada que explica el juego, la tripulación, los objetos, las salas y los eventos. Lo siguiente es el ranking online. Consulta el [roadmap](docs/roadmap.md).
+Jugable de principio a fin en local y online (salas privadas con código), con ranking online y una portada que explica el juego, la tripulación, los objetos, las salas y los eventos. Consulta el [roadmap](docs/roadmap.md).
 
 ## Desarrollo
 
@@ -53,7 +54,7 @@ npm run deploy     # compilar y publicar la web y las salas en Cloudflare (requi
 - **TypeScript** estricto, **three.js**, **Vite** y **Vitest**, en un monorepo de npm.
 - `packages/shared`: motor de reglas puro (`applyAction(state, action) → { state, events }`), contenido, balance e IA. No depende del navegador y toda la aleatoriedad pasa por un RNG con semilla.
 - `packages/client`: cliente three.js y HUD. Lee el estado y reproduce los sucesos, nunca decide reglas.
-- `packages/server`: un Cloudflare Worker con un Durable Object por sala online, que ejecuta el mismo motor y juega las máquinas.
+- `packages/server`: un Cloudflare Worker con un Durable Object por sala online, que ejecuta el mismo motor y juega las máquinas, y el ranking en Cloudflare D1.
 - **Arte 100 % generado por código** (geometría low-poly y texturas en canvas), sin assets de terceros. Estilo industrial oscuro.
 - Alojado en Cloudflare: un solo Worker sirve la página y las salas (Durable Objects con SQLite, plan gratuito).
 

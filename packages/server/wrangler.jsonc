@@ -12,6 +12,8 @@
   "durable_objects": {
     "bindings": [{ "name": "ROOMS", "class_name": "RoomObject" }]
   },
+  // Online ranking (see migrations/).
+  "d1_databases": [{ "binding": "DB", "database_name": "afloat", "database_id": "289693ca-f650-423b-abcb-8e3d9e1f052e" }],
   // SQLite-backed Durable Objects: the only kind available on the free plan.
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["RoomObject"] }]
 }

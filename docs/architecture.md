@@ -12,7 +12,7 @@ Qué hace el juego está en `docs/prd.md`; aquí solo se describe **cómo** se c
 | Tests | Vitest | Rápido, integrado con Vite; se usa sobre el motor de reglas |
 | Gestor de paquetes | npm (workspaces) | Por defecto con Node; un paquete `shared` con el motor y otro `client`, y luego `server` |
 
-**Fase 2 (online)**: servidor autoritativo que ejecuta el mismo motor de reglas dentro de un Cloudflare Durable Object por sala (WebSocket). Sin cuentas: nombre y código de sala (Clerk más adelante). El cliente habla con una `Session`: `LocalSession` (en este ordenador) o `RemoteSession` (online). **Hecho**: salas privadas con código. **Pendiente**: ranking online en Cloudflare D1.
+**Fase 2 (online)**: servidor autoritativo que ejecuta el mismo motor de reglas dentro de un Cloudflare Durable Object por sala (WebSocket). Sin cuentas: nombre y código de sala (Clerk más adelante). El cliente habla con una `Session`: `LocalSession` (en este ordenador) o `RemoteSession` (online). **Hecho**: salas privadas con código y ranking online en Cloudflare D1.
 
 ## Principio central: motor de reglas puro
 
@@ -114,19 +114,22 @@ survemarine/                   (carpeta del proyecto; el juego se llama AFLOAT)
 ```
 
     └── server/                @afloat/server — Cloudflare Worker: sirve la página y las salas online
-        ├── wrangler.jsonc     Worker "afloat": assets del cliente + Durable Object RoomObject (SQLite)
+        ├── wrangler.jsonc     Worker "afloat": assets del cliente + Durable Object RoomObject (SQLite) + D1 `afloat` (binding DB)
         ├── src/
         │   ├── index.ts       Rutas (/api/rooms, /api/rooms/:code/ws, resto → página) y RoomObject (sockets con hibernación, almacenamiento, alarmas)
         │   ├── room.ts        Room: lógica pura de la sala (asientos, anfitrión, personajes, partida, máquinas, desconexiones)
+        │   ├── ranking.ts     Ranking en D1: guardar partidas que puntúan, clasificaciones y puestos
         │   └── config.ts      Tiempos del servidor (ritmo de las máquinas, caducidad de salas vacías)
-        └── tests/             room.test.ts
+        ├── migrations/        SQL de la D1 `afloat` (tablas del ranking)
+        └── tests/             room.test.ts, ranking.test.ts (con una D1 de prueba sobre la SQLite de Node)
 
 ## Partidas online
 
 - El servidor es el único que ejecuta `applyAction` en una partida online. El navegador envía acciones y recibe cada acción aceptada (de cualquiera) con sus sucesos y el estado nuevo, numeradas; si falta una, pide el estado completo.
 - `App` anima todo lo que llega por `Session.onResult` en una cola, igual en local que online. `Session.controls(id)` dice qué tripulantes maneja este navegador; fuera de tu turno la entrada está bloqueada.
 - Las máquinas las juega el servidor, con una pausa que depende de cuántos sucesos tenga que animar el cliente.
-- El servidor envía el estado completo, incluido lo oculto: aceptado mientras no haya ranking online.
+- El servidor envía el estado completo, incluido lo oculto (y la semilla). Con el ranking, alguien con conocimientos podría mirarlo para hacer trampa; se acepta para un ranking entre amigos (decisión del usuario, 2026-10-02).
+- **Ranking**: al terminar una partida online que empezó con todos humanos, la sala calcula `scoreGame` y `ranking.ts` la guarda en D1 (partida con su configuración y acciones, jugadores, y suma de total y mejor partida por jugador). Los jugadores se guardan por la huella SHA-256 de su clave. `GET /api/ranking?me=<huella>` da el top 20 de cada clasificación.
 - Coste: Durable Objects con SQLite en el plan gratuito de Workers; si se superan los límites diarios, las operaciones fallan en vez de cobrarse.
 
 Los imports del cliente al motor usan subrutas: `@afloat/shared/engine`, `@afloat/shared/content/items`, `@afloat/shared/config/balance`, `@afloat/shared/ai/bot`.

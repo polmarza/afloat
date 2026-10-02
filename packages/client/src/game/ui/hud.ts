@@ -339,7 +339,7 @@ export class Hud {
     onRecords: () => void,
     onReplay: (() => void) | null,
     onNewSetup: () => void,
-    labels: { replay: string; setup: string; note: string } = { replay: 'Nueva partida', setup: 'Cambiar jugadores', note: '' },
+    labels: { replay: string; setup: string; note: string; ranking?: string } = { replay: 'Nueva partida', setup: 'Cambiar jugadores', note: '' },
   ) {
     const saved = s.players.filter((p) => p.escaped);
     const lost = s.players.filter((p) => !p.escaped);
@@ -365,6 +365,7 @@ export class Hud {
         <div class="score-mult"><span>Dificultad ${DIFFICULTY_NAMES[s.difficulty]}</span><span>${score.base} × ${score.multiplier}</span></div>
       </div>
       <p class="muted">Semilla: ${escapeHtml(s.seed)}</p>
+      ${labels.ranking !== undefined ? `<div class="end-ranking" id="end-ranking">${labels.ranking}</div>` : ''}
       ${labels.note ? `<p class="muted">${labels.note}</p>` : ''}
       <div class="row"><button id="end-records">Récords</button><button id="end-setup">${labels.setup}</button>${onReplay ? `<button id="end-replay" class="primary">${labels.replay}</button>` : ''}</div>
     </div>`;
@@ -380,6 +381,12 @@ export class Hud {
       dialog.style.display = 'none';
       onNewSetup();
     };
+  }
+
+  /** Online end screen: how the game went into the ranking, once the server says. */
+  setEndRanking(html: string) {
+    const el = document.getElementById('end-ranking');
+    if (el) el.innerHTML = html;
   }
 
   hide() {

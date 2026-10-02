@@ -8,7 +8,7 @@ import { BALANCE } from '@afloat/shared/config/balance';
 import { CHARACTERS } from '@afloat/shared/content/characters';
 import { DIFFICULTY_ORDER, type Difficulty } from '@afloat/shared/content/difficulty';
 import { ROLE_ORDER, type RoleId } from '@afloat/shared/content/roles';
-import { applyAction, createGame, type Action, type ActionResult, type GameEvent, type GameState, type NewGame } from '@afloat/shared/engine';
+import { applyAction, createGame, scoreGame, type Action, type ActionResult, type GameEvent, type GameState, type NewGame } from '@afloat/shared/engine';
 import { cleanName, type ClientMessage, type RoomErrorCode, type RoomPhase, type RoomView, type ServerMessage } from '@afloat/shared/net/protocol';
 
 interface Seat {
@@ -27,6 +27,22 @@ interface Game {
   actions: Action[];
   /** Bot memory (rooms searched empty), kept as a list so it can be stored. */
   searchedEmpty: string[];
+  /** Every seat was human at the start: the game counts for the online ranking. */
+  ranked: boolean;
+}
+
+/** A finished ranked game, ready to be written to the ranking. */
+export interface RankedGame {
+  id: string;
+  room: string;
+  difficulty: Difficulty;
+  status: GameState['status'];
+  score: number;
+  rounds: number;
+  setup: NewGame;
+  actions: Action[];
+  /** The human players (all of them, connected or not), with their browser keys. */
+  players: { key: string; name: string; role: RoleId }[];
 }
 
 /** Everything the room needs to survive a restart. Plain JSON. */
@@ -39,6 +55,8 @@ export interface RoomData {
   game: Game | null;
   /** Open connections: connection id → player key. */
   conns: Record<string, string>;
+  /** Games started in this room (for ranked game ids). */
+  gamesStarted: number;
 }
 
 /** A message for one connection. */
@@ -48,6 +66,9 @@ export interface Outgoing {
 }
 
 export class Room {
+  /** Set when a ranked game has just ended; the Durable Object writes it and clears it. */
+  finished: RankedGame | null = null;
+
   constructor(
     readonly data: RoomData,
     /** Seed for each new game (random on the server, fixed in tests). */
@@ -55,7 +76,7 @@ export class Room {
   ) {}
 
   static create(code: string, newSeed: () => string) {
-    return new Room({ code, phase: 'lobby', difficulty: 'normal', hostKey: null, seats: [], game: null, conns: {} }, newSeed);
+    return new Room({ code, phase: 'lobby', difficulty: 'normal', hostKey: null, seats: [], game: null, conns: {}, gamesStarted: 0 }, newSeed);
   }
 
   /** Whether the active crew member is played by the server right now. */
@@ -201,7 +222,8 @@ export class Room {
       players: d.seats.map((s) => ({ name: s.name, role: s.role!, bot: s.key === null })),
     };
     const { state, events } = createGame(setup);
-    d.game = { setup, state, startEvents: events, actions: [], searchedEmpty: [] };
+    d.gamesStarted = (d.gamesStarted ?? 0) + 1;
+    d.game = { setup, state, startEvents: events, actions: [], searchedEmpty: [], ranked: d.seats.every((s) => s.key !== null) };
     d.phase = 'playing';
     const started: ServerMessage = { type: 'started', setup, state, startEvents: events, seq: 0 };
     return [...this.toAll(started), ...this.roomMessages()];
@@ -235,8 +257,30 @@ export class Room {
     if (result.state.status !== 'playing') {
       this.data.phase = 'ended';
       out.push(...this.roomMessages());
+      if (g.ranked) this.finished = this.rankedGame(g);
+      else out.push(...this.toAll({ type: 'ranked', counted: false, reason: 'bots' }));
     }
     return out;
+  }
+
+  private rankedGame(g: Game): RankedGame {
+    const d = this.data;
+    return {
+      id: `${d.code}-${d.gamesStarted}`,
+      room: d.code,
+      difficulty: g.setup.difficulty ?? 'normal',
+      status: g.state.status,
+      score: scoreGame(g.state).total,
+      rounds: g.state.round,
+      setup: g.setup,
+      actions: g.actions,
+      players: d.seats.flatMap((s) => (s.key ? [{ key: s.key, name: s.name, role: s.role! }] : [])),
+    };
+  }
+
+  /** Player keys of the open connections (to tell each player their own places). */
+  connectionKeys() {
+    return Object.entries(this.data.conns);
   }
 
   // -------------------------------------------------------------- helpers
@@ -263,6 +307,7 @@ export class Room {
       code: d.code,
       phase: d.phase,
       difficulty: d.difficulty,
+      ranked: d.phase === 'lobby' ? d.seats.every((s) => s.key !== null) : !!d.game?.ranked,
       seats: d.seats.map((s) => ({
         name: s.name,
         role: s.role,

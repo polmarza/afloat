@@ -1,17 +1,20 @@
 // Cloudflare Worker: serves the game page and the online rooms.
 //   POST /api/rooms            → creates a room, answers { code }
 //   GET  /api/rooms/:code/ws   → WebSocket into that room's Durable Object
+//   GET  /api/ranking?me=…     → online ranking (D1)
 //   anything else              → the static client (assets)
 
 import { DurableObject } from 'cloudflare:workers';
 import { isRoomCode, MAX_MESSAGE_BYTES, ROOM_CODE_ALPHABET, ROOM_CODE_LENGTH, type ClientMessage } from '@afloat/shared/net/protocol';
 import type { GameEvent } from '@afloat/shared/engine';
 import { SERVER } from './config';
+import { readRanking, recordGame } from './ranking';
 import { Room, type Outgoing, type RoomData } from './room';
 
 export interface Env {
   ASSETS: Fetcher;
   ROOMS: DurableObjectNamespace<RoomObject>;
+  DB: D1Database;
 }
 
 function randomCode() {
@@ -40,6 +43,15 @@ export default {
       if (request.headers.get('Upgrade') !== 'websocket') return new Response('Expected WebSocket', { status: 426 });
       if (!isRoomCode(ws[1])) return new Response('Not found', { status: 404 });
       return env.ROOMS.getByName(ws[1]).fetch(request);
+    }
+    if (url.pathname === '/api/ranking' && request.method === 'GET') {
+      const me = url.searchParams.get('me');
+      try {
+        return json(await readRanking(env.DB, me && /^[0-9a-f]{64}$/.test(me) ? me : null));
+      } catch (err) {
+        console.error('ranking read failed', err);
+        return json({ error: 'unavailable' }, 503);
+      }
     }
     if (url.pathname.startsWith('/api/')) return new Response('Not found', { status: 404 });
     return env.ASSETS.fetch(request);
@@ -91,6 +103,7 @@ export class RoomObject extends DurableObject<Env> {
     this.afterChange(out);
     await this.save();
     await this.schedule();
+    await this.recordFinished();
   }
 
   async webSocketClose(ws: WebSocket) {
@@ -111,6 +124,7 @@ export class RoomObject extends DurableObject<Env> {
       this.botAt = 0;
       this.afterChange(out);
       await this.save();
+      await this.recordFinished();
     }
     const emptySince = (await this.ctx.storage.get<number>('emptySince')) ?? 0;
     if (room.connectionCount === 0 && emptySince && now - emptySince >= SERVER.emptyRoomTtlMs) {
@@ -123,6 +137,29 @@ export class RoomObject extends DurableObject<Env> {
   }
 
   // -------------------------------------------------------------- helpers
+
+  /** A ranked game just ended: into the ranking, and each player hears their points and places. */
+  private async recordFinished() {
+    const room = this.room;
+    const game = room?.finished;
+    if (!room || !game) return;
+    room.finished = null;
+    try {
+      const places = await recordGame(this.env.DB, game, Date.now());
+      this.send(
+        room.connectionKeys().map(([to, key]) => {
+          const mine = places.get(key);
+          return {
+            to,
+            msg: mine ? { type: 'ranked', counted: true, points: game.score, total: mine.total, best: mine.best } : { type: 'ranked', counted: false, reason: 'error' },
+          };
+        }),
+      );
+    } catch (err) {
+      console.error('ranking write failed', game.id, err);
+      this.send(room.connectionKeys().map(([to]) => ({ to, msg: { type: 'ranked', counted: false, reason: 'error' } })));
+    }
+  }
 
   private async dropped(ws: WebSocket) {
     const room = await this.load();

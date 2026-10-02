@@ -41,7 +41,36 @@ export interface RoomView {
   difficulty: Difficulty;
   /** In play order: seat i is player `players[i]` once the game starts. */
   seats: SeatView[];
+  /** The game being set up or played counts for the online ranking (all seats human at the start). */
+  ranked: boolean;
 }
+
+// ---------------------------------------------------------------- ranking
+
+/** How many rows each ranking shows. */
+export const RANKING_SIZE = 20;
+
+export interface RankPosition {
+  rank: number;
+  points: number;
+}
+
+export interface RankingRow extends RankPosition {
+  name: string;
+  games: number;
+  /** This browser's row. */
+  me?: boolean;
+}
+
+/** `GET /api/ranking?me=<fingerprint>`: both rankings, and your rows if you are outside the top. */
+export interface RankingResponse {
+  total: RankingRow[];
+  best: RankingRow[];
+  me?: { total: RankingRow; best: RankingRow };
+}
+
+/** Why a finished online game did not count. */
+export type UnrankedReason = 'bots' | 'error';
 
 export type ClientMessage =
   | { type: 'hello'; key: string; name: string }
@@ -67,6 +96,9 @@ export type ServerMessage =
   | { type: 'result'; seq: number; action: Action; events: GameEvent[]; state: GameState }
   /** The whole game, after reconnecting or when a result went missing. */
   | { type: 'snapshot'; setup: NewGame; state: GameState; actions: Action[]; seq: number }
+  /** A finished game went into the ranking (your points and places), or why it didn't. */
+  | { type: 'ranked'; counted: false; reason: UnrankedReason }
+  | { type: 'ranked'; counted: true; points: number; total: RankPosition; best: RankPosition }
   /** Your action was not accepted (the reason is ready to show). */
   | { type: 'rejected'; reason: string }
   | { type: 'error'; code: RoomErrorCode };

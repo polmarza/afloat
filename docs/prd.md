@@ -55,7 +55,7 @@ El grupo de amigos quiere un juego cooperativo online, con la sensación de jueg
 ### Won't (en el MVP)
 - Multijugador online (fase 2; ya disponible con salas por código, ver `openspec/specs/online-rooms/spec.md`).
 - Integración como Discord Activity.
-- Cuentas de usuario, rankings online, guardado de partidas a medias (los récords locales sí están).
+- Cuentas de usuario y guardado de partidas a medias (los récords locales sí están; el ranking online llegó en la fase 2).
 - Chat de texto o voz dentro del juego.
 - Versión móvil.
 - Monetización.

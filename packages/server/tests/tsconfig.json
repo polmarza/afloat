@@ -1,0 +1,9 @@
+{
+  // Tests run on Node (Vitest), so they also get Node's types.
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2022"],
+    "types": ["@cloudflare/workers-types", "node"]
+  },
+  "include": [".", "../src"]
+}

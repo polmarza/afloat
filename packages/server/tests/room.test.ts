@@ -227,3 +227,48 @@ describe('game', () => {
     expect(ROLE_ORDER).toContain(copy.data.seats[0].role);
   });
 });
+
+describe('ranking', () => {
+  it('counts a game when every seat was human at the start', () => {
+    const room = lobbyOfTwo();
+    expect(room.view().ranked).toBe(true);
+    room.receive('c1', { type: 'start' });
+    // Almost out of oxygen: passing a round ends the game.
+    room.data.game!.state.oxygen = 0.1;
+    let guard = 0;
+    while (room.data.phase === 'playing' && guard++ < 500) {
+      const s = room.data.game!.state;
+      const conn = s.activePlayerIndex === 0 ? 'c1' : 'c2';
+      room.receive(conn, { type: 'action', action: { type: 'PASS', playerId: s.players[s.activePlayerIndex].id } });
+    }
+    expect(room.data.phase).toBe('ended');
+    expect(room.finished).toMatchObject({ id: 'K7QFM-1', room: 'K7QFM', players: [{ key: 'ana', name: 'Ana' }, { key: 'luis', name: 'Luis' }] });
+  });
+
+  it('still counts when the computer stood in for someone who dropped', () => {
+    const room = startedOfTwo();
+    room.close('c2');
+    room.receive('c1', { type: 'botTakeover', seat: 1 });
+    expect(room.view().ranked).toBe(true);
+  });
+
+  it('does not count games with computer crew, and says why', () => {
+    const room = lobbyOfTwo();
+    room.receive('c1', { type: 'addBot', role: 'diver' });
+    expect(room.view().ranked).toBe(false);
+    room.receive('c1', { type: 'start' });
+    room.data.game!.state.oxygen = 0.1;
+    let out: Outgoing[] = [];
+    let guard = 0;
+    while (room.data.phase === 'playing' && guard++ < 500) {
+      const s = room.data.game!.state;
+      if (room.serverTurn) out = room.botStep().out;
+      else {
+        const conn = s.activePlayerIndex === 0 ? 'c1' : 'c2';
+        out = room.receive(conn, { type: 'action', action: { type: 'PASS', playerId: s.players[s.activePlayerIndex].id } });
+      }
+    }
+    expect(room.finished).toBeNull();
+    expect(last(out, 'c1', 'ranked')).toEqual({ type: 'ranked', counted: false, reason: 'bots' });
+  });
+});

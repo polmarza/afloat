@@ -5,16 +5,19 @@
   "type": "module",
   "description": "Online rooms: a Cloudflare Worker with one Durable Object per room that runs the shared rules engine. Also serves the built client.",
   "scripts": {
-    "dev": "node -e \"require('fs').mkdirSync('../client/dist',{recursive:true})\" && wrangler dev --port 8787",
+    "dev": "node -e \"require('fs').mkdirSync('../client/dist',{recursive:true})\" && wrangler d1 migrations apply afloat --local && wrangler dev --port 8787",
     "deploy": "wrangler deploy",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tests",
+    "db:migrate": "wrangler d1 migrations apply afloat --remote",
+    "db:migrate:local": "wrangler d1 migrations apply afloat --local"
   },
   "dependencies": {
     "@afloat/shared": "*"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20261002.1",
+    "@types/node": "^22.20.5",
     "vitest": "^5.0.2",
     "wrangler": "^4.147.0"
   }
