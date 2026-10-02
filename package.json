@@ -1,0 +1,18 @@
+{
+  "name": "afloat",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "workspaces": ["packages/*"],
+  "scripts": {
+    "dev": "npm run dev -w @afloat/client",
+    "build": "npm run build -w @afloat/client",
+    "preview": "npm run preview -w @afloat/client",
+    "deploy": "npm run deploy -w @afloat/client",
+    "test": "npm run test -w @afloat/shared",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2"
+  }
+}

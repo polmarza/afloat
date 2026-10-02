@@ -1,0 +1,6 @@
+node_modules/
+dist/
+.DS_Store
+
+# Purchased art pack (no longer used); its license forbids redistribution.
+assets-src/

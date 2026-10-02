@@ -1,0 +1,22 @@
+schema: spec-driven
+
+context: |
+  AFLOAT: juego cooperativo por turnos para navegador (2-5 jugadores) en un
+  submarino averiado generado aleatoriamente. Objetivo: que al menos un tripulante
+  salga a flote antes de que se acabe el oxígeno común.
+  Stack: TypeScript + three.js + Vite + Vitest. MVP 100% local (hot-seat).
+  Arte 3D low-poly generado por código (estilo diorama, referencia Lara Croft GO).
+  Monorepo: motor de reglas puro en packages/shared/src/engine (sin three.js, sin DOM, sin Math.random), cliente en packages/client/src/game.
+  Todos los números de equilibrio en packages/shared/src/config/balance.ts.
+  Documentación de contexto en docs/ (prd, design-system, architecture, data-model, roadmap).
+  Idioma de specs, UI y documentación: español. Identificadores de código: inglés.
+
+rules:
+  proposal:
+    - Indicar qué fase del roadmap (docs/roadmap.md) cubre el cambio.
+    - Si el cambio añade o modifica números de reglas, deben ir a packages/shared/src/config/balance.ts.
+  specs:
+    - Usar SHALL/MUST/SHOULD (RFC 2119) y escenarios GIVEN/WHEN/THEN.
+    - Referenciar valores de equilibrio por su clave en BALANCE, no con números sueltos.
+  tasks:
+    - Toda regla nueva del motor lleva tests en packages/shared/tests/engine.

@@ -1,0 +1,21 @@
+{
+  "name": "@afloat/shared",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "description": "Rules engine, game content, balance and bot AI. Pure TypeScript: no DOM, no three.js. Used by the client and (later) the server.",
+  "exports": {
+    "./engine": "./src/engine/index.ts",
+    "./engine/*": "./src/engine/*.ts",
+    "./content/*": "./src/content/*.ts",
+    "./config/*": "./src/config/*.ts",
+    "./ai/*": "./src/ai/*.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "vitest": "^5.0.2"
+  }
+}
