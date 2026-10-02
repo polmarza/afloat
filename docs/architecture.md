@@ -92,7 +92,11 @@ survemarine/                   (carpeta del proyecto; el juego se llama AFLOAT)
     │   │       └── mapgen/         generate.ts (módulos + cantina doble + puertas + objetos), validate.ts
     │   └── tests/                  engine/ (reglas, generador, puntuación) y ai/ (bots)
     └── client/                @afloat/client — navegador: three.js + HUD en HTML
-        ├── index.html         Lienzo 3D + HUD en HTML
+        ├── index.html         Lienzo 3D + HUD en HTML; metadatos (descripción, Open Graph, Twitter, JSON-LD de VideoGame)
+        ├── og.html, src/og.ts Página que se fotografía para la imagen para compartir (no se publica)
+        ├── public/            favicon, iconos, og-image.jpg, site.webmanifest, robots.txt, sitemap.xml
+        ├── scripts/brand.mjs  Genera los PNG y la imagen para compartir con Chrome sin ventana
+        ├── .env               VITE_SITE_URL: dirección pública (enlaces canónicos y de compartir)
         ├── vite.config.ts
         └── src/
             ├── main.ts        Arranque
@@ -185,6 +189,6 @@ Una acción inválida devuelve el mismo estado y un suceso `ActionRejected` con 
 ## Despliegue
 
 - **Desarrollo**: `npm run dev` arranca Vite (`http://localhost:5173`) y el Worker con `wrangler dev` (puerto 8787) a la vez; Vite reenvía `/api` (también el WebSocket) al Worker. `npm run dev:web` arranca solo la web.
-- **Publicado en Cloudflare**: https://afloat.polmarza.workers.dev. Un solo Worker (`afloat`) sirve la página y las salas online. Se actualiza con `npm run deploy` (compila el cliente y despliega `packages/server/wrangler.jsonc`; usa la sesión de `wrangler login`). Dominio propio pendiente.
+- **Publicado en Cloudflare**: https://afloat.polmarza.workers.dev. Un solo Worker (`afloat`) sirve la página y las salas online. Se actualiza con `npm run deploy` (compila el cliente y despliega `packages/server/wrangler.jsonc`; usa la sesión de `wrangler login`). Dominio propio pendiente: al cambiarlo, actualizar `packages/client/.env`, `public/robots.txt` y `public/sitemap.xml`.
 - **Build estático**: `npm run build` genera `dist/`, publicable en cualquier hosting estático si se quiere compartir la versión local.
 - **Fase 2**: hecho con el mismo Worker (página + salas).

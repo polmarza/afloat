@@ -1,0 +1,15 @@
+{
+  "name": "AFLOAT",
+  "short_name": "AFLOAT",
+  "description": "Juego cooperativo por turnos: escapad de un submarino averiado antes de que se acabe el oxígeno.",
+  "lang": "es",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#040506",
+  "theme_color": "#040506",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

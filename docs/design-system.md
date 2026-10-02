@@ -73,6 +73,12 @@ Figuras low-poly de bloques (estilo juguete/diorama) con cara sencilla: dos ojos
 | Oxígeno (barra) | `#3ec6e0`; parpadea en `#ff3b2f` por debajo del 25% |
 | Vida (corazones) | `#e0443a`; vacíos `#44403e` |
 
+## Marca e imágenes para compartir
+
+- **Favicon**: el rombo rojo de las vidas del HUD (`#e0443a`), sin fondo (`packages/client/public/favicon.svg`). Para el iPhone y la app instalada, el mismo rombo sobre `#040506` con margen.
+- **Imagen para compartir** (`og-image.jpg`, 1200×630): como el hero de la portada: rombo y AFLOAT en ámbar, la frase del juego en grande, la línea de presentación en gris y, a la derecha, los camarotes en 3D con tres tripulantes. Se pinta con el propio juego (`og.html`).
+- Los PNG y la imagen para compartir se regeneran con `npm run brand -w @afloat/client` (con `npm run dev` arrancado). Hay que hacerlo si cambia el arte de los camarotes, los tripulantes o los textos del hero.
+
 ## Tipografía
 
 Provisional (prototipo): **Barlow Condensed** (Google Fonts, OFL) para el HUD y los nombres de sala. Se revisará al elegir el estilo visual: el estilo pixelado pediría una fuente pixel; el diorama, una más limpia o elegante.

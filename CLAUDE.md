@@ -21,6 +21,7 @@ El usuario no programa: Claude escribe todo el código y consulta al usuario las
 - `npm run dev` → web en `http://localhost:5173` y servidor de salas (`wrangler dev`, puerto 8787) a la vez.
 - `npm test` → tests del motor, de la IA y de la lógica de las salas.
 - `npm run deploy` → compila y publica la web y el servidor en Cloudflare.
+- `npm run brand -w @afloat/client` → regenera favicon PNG, iconos y la imagen para compartir (con `npm run dev` arrancado). Hazlo si cambia el arte del hero.
 - `npm run typecheck` / `npm run build` → comprobar tipos de todos los paquetes / compilar el cliente.
 
 ## Estructura

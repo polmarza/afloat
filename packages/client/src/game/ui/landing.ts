@@ -16,7 +16,8 @@ import { RANKING_INTRO, showRanking } from './ranking';
 import { hearts } from './sheet';
 
 const REPO_URL = 'https://github.com/polmarza/afloat';
-const TAGLINE = 'La alarma os despierta en un submarino averiado. Que al menos uno salga a flote.';
+export const TAGLINE = 'La alarma os despierta en un submarino averiado. Que al menos uno salga a flote.';
+export const PITCH = 'Cooperativo por turnos · 2 a 5 jugadores · en el navegador';
 
 const SECTIONS = [
   { id: 'como-se-juega', name: 'Cómo se juega' },
@@ -46,7 +47,7 @@ export function showLanding(root: HTMLElement, materials: Materials, portraits: 
         <h1>AFLOAT</h1>
         <p class="landing-tagline">${TAGLINE}</p>
         <button class="primary landing-cta" data-play>Jugar</button>
-        <p class="landing-meta">Cooperativo por turnos · 2 a 5 jugadores · en el navegador</p>
+        <p class="landing-meta">${PITCH}</p>
       </div>
       <div class="landing-hero-stage vignette" data-stage="hero"></div>
       <button class="landing-down" data-goto="${SECTIONS[0].id}" aria-label="Cómo se juega">⌄</button>
