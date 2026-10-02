@@ -7,6 +7,10 @@ import { ROOM_D, ROOM_W } from '@afloat/shared/config/balance';
 import { ITEMS } from '@afloat/shared/content/items';
 import { FLOODED_GUIDE, ROOM_GUIDE, ROOM_NAMES, SYSTEM_NAMES } from '@afloat/shared/content/rooms';
 import { scoreGame, type Action, type GameEvent, type GameState, type NewGame } from '@afloat/shared/engine';
+import { Ambience } from './audio/ambience';
+import { Sound } from './audio/engine';
+import { footstep } from './audio/recipes';
+import { eventSound } from './audio/sfx';
 import { CrewFigure } from './crew';
 import { LocalSession, type PlayedAction, type Session } from './session';
 import type { RankedMessage, RemoteSession } from './online/remoteSession';
@@ -70,6 +74,8 @@ export class App {
   /** Bumped whenever a game view is built or closed: loops of the previous one stop. */
   private gameGen = 0;
   private readonly subscribed = new WeakSet<Session>();
+  private readonly sound = new Sound();
+  private readonly ambience = new Ambience(this.sound);
   /** Round phase while events are being played back. */
   private phaseNow: GameState['phase'] = 'crew';
   /** Where to walk after an engine MOVE, when the player clicked a specific tile. */
@@ -106,6 +112,8 @@ export class App {
         onTorch: (id) => this.toggleTorch(id),
         isBusy: () => this.busy || this.botRunning || this.pumping || !this.myTurn(),
         onMenu: () => void this.openMenu(),
+        onSound: () => this.sound.toggleMute(),
+        isMuted: () => this.sound.muted,
       },
       this.portraits,
       this.itemImages,
@@ -114,6 +122,8 @@ export class App {
 
     window.addEventListener('resize', () => this.resize());
     window.addEventListener('keydown', (e) => this.onKey(e));
+    // Browsers only allow audio after the player interacts with the page.
+    for (const type of ['pointerdown', 'keydown'] as const) window.addEventListener(type, () => this.sound.unlock(), { capture: true });
     container.addEventListener('pointerdown', (e) => this.onPointerDown(e));
     container.addEventListener('pointermove', (e) => this.onPointerMove(e));
     container.addEventListener('pointerleave', () => this.hud.tooltip(null));
@@ -207,6 +217,7 @@ export class App {
     for (const p of this.state.players) if (p.bot) this.torches.set(p.id, true);
     this.buildScene();
     this.hud.render(this.state, false);
+    this.ambience.start(this.state.status === 'playing' && !this.state.systems.power.repaired);
     if (fresh) {
       this.busy = true;
       if (this.tutorial) await showIntro();
@@ -228,6 +239,7 @@ export class App {
     this.pumping = false;
     this.botRunning = false;
     this.busy = false;
+    this.ambience.stop();
     this.hud.hide();
     document.getElementById('toasts')!.innerHTML = '';
     document.getElementById('dialog')!.style.display = 'none';
@@ -330,7 +342,9 @@ export class App {
 
   private async openMenu() {
     if (this.busy || !this.world) return;
-    if ((await showGameMenu(!!this.remote)) !== 'abandon') return;
+    const choice = await showGameMenu(!!this.remote, { volume: this.sound.muted ? 0 : this.sound.volume, onVolume: (v) => this.sound.setVolume(v) });
+    this.hud.render(this.state, this.busy);
+    if (choice !== 'abandon') return;
     if (this.remote) return this.leaveOnline();
     this.closeGame();
     this.openSetup();
@@ -403,6 +417,8 @@ export class App {
     }
     this.highlightActive();
     this.hud.render(this.state, false);
+    if (this.state.status === 'playing') this.ambience.setAlarm(!this.state.systems.power.repaired);
+    else this.ambience.stop();
     this.busy = true;
     await this.showGuides(events);
     const escapedByPod = events.some((e) => e.type === 'PlayerEscaped' && e.how === 'pod');
@@ -465,6 +481,8 @@ export class App {
   private async play(e: GameEvent, before: GameState) {
     const world = this.world!;
     const s = this.state;
+    // Doors sound once the crew member has walked up to them; everything else as it starts.
+    if (e.type !== 'DoorOpened' && e.type !== 'DoorFailed') this.sfx(e);
     switch (e.type) {
       case 'PlayerMoved':
         await this.walkThroughDoor(e.playerId, e.doorId, e.to);
@@ -482,11 +500,13 @@ export class App {
       case 'DoorOpened': {
         const p = s.players.find((pl) => pl.id === e.byPlayerId);
         if (p) await this.approachDoor(p.id, e.doorId);
+        this.sfx(e);
         await world.syncDoor(s.doors[e.doorId], p?.roomId ?? null);
         break;
       }
       case 'DoorFailed':
         await this.approachDoor(activePlayer(before).id, e.doorId);
+        this.sfx(e);
         await this.rattle(e.doorId);
         break;
       case 'DoorClosed':
@@ -643,7 +663,13 @@ export class App {
     c.fig.walking = false;
   }
 
+  private sfx(e: GameEvent) {
+    eventSound(this.sound, e, { myTurn: e.type === 'TurnChanged' && this.session.controls(e.playerId) });
+  }
+
   private step(c: CrewView, [x, z]: Cell, ms = STEP_MS) {
+    const room = this.world!.roomAt(x, z);
+    footstep(this.sound, !!room && this.state.rooms[room]?.flooded);
     const from = c.fig.root.position.clone();
     const to = new THREE.Vector3(x + 0.5, this.world!.cellY(x, z), z + 0.5);
     this.turn(c, Math.atan2(x - c.x, z - c.z));

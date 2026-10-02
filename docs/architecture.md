@@ -113,6 +113,8 @@ survemarine/                   (carpeta del proyecto; el juego se llama AFLOAT)
                 ├── tweens.ts      Animaciones
                 ├── records.ts     Tabla de récords en localStorage (con acciones para poder reproducirlas)
                 ├── vignette.ts    Escenas 3D pequeñas de la portada (salas reales animadas por un guion)
+                ├── audio/         Sonido sintetizado con Web Audio: engine.ts (contexto, volumen, silencio), recipes.ts (cada sonido),
+                │                  sfx.ts (qué suena con cada suceso), ambience.ts (zumbido y alarma)
                 └── ui/            landing.ts y landingScenes.ts (portada), online.ts (modo de juego, crear/unirse, sala de espera), setup.ts (preparación), hud.ts (paneles, avisos, pantalla final),
                                    options.ts (acciones disponibles), sheet.ts (fichas, resumen, menú, récords), modal.ts
 ```
@@ -177,7 +179,7 @@ Una acción inválida devuelve el mismo estado y un suceso `ActionRejected` con 
 
 - **MVP**: ninguna. Todo funciona sin conexión tras cargar la página.
 - **Fuentes**: Barlow Condensed (Google Fonts) para el HUD del prototipo.
-- **Assets**: ninguno de terceros; todo el arte se genera por código.
+- **Assets**: ninguno de terceros; todo el arte y el sonido se generan por código (el sonido, con Web Audio en el navegador).
 - **Fase 2**: Cloudflare Durable Objects (una sala por partida, WebSocket).
 - **Fase 3**: Discord Embedded App SDK (Activities), opcional.
 

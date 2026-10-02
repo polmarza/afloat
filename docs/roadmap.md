@@ -52,7 +52,7 @@ Objetivo: una partida completa de principio a fin en un solo PC, pasándose el t
 
 ### 1d. Pulido y pruebas (M)
 - [ ] Partidas de prueba con amigos (hot-seat) y ajuste de equilibrio.
-- [ ] Sonido básico: alarma, puertas, dado, agua.
+- [x] Sonido sintetizado en el navegador (sin archivos): acciones, peligros, ambiente con alarma en pulsos y avisos de partida; botón de silencio (M) y volumen en el menú. Pendiente de afinar de oído.
 - [ ] Ayuda contextual de reglas.
 
 **Hito**: el grupo juega una partida completa y quiere repetir.

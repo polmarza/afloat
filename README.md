@@ -55,7 +55,7 @@ npm run deploy     # compilar y publicar la web y las salas en Cloudflare (requi
 - `packages/shared`: motor de reglas puro (`applyAction(state, action) → { state, events }`), contenido, balance e IA. No depende del navegador y toda la aleatoriedad pasa por un RNG con semilla.
 - `packages/client`: cliente three.js y HUD. Lee el estado y reproduce los sucesos, nunca decide reglas.
 - `packages/server`: un Cloudflare Worker con un Durable Object por sala online, que ejecuta el mismo motor y juega las máquinas, y el ranking en Cloudflare D1.
-- **Arte 100 % generado por código** (geometría low-poly y texturas en canvas), sin assets de terceros. Estilo industrial oscuro.
+- **Arte y sonido 100 % generados por código** (geometría low-poly, texturas en canvas y sonidos sintetizados con Web Audio), sin assets de terceros. Estilo industrial oscuro.
 - Alojado en Cloudflare: un solo Worker sirve la página y las salas (Durable Objects con SQLite, plan gratuito).
 
 ## Documentación

@@ -117,15 +117,19 @@ export async function showRecords(records: GameRecord[], highlight?: string) {
 
 /** In-game menu. Resolves 'abandon' only after a confirmation. */
 /** `online`: leaving means leaving the room (the game goes on for the others). */
-export async function showGameMenu(online = false): Promise<'resume' | 'abandon'> {
-  const { button } = await openModal(
+export async function showGameMenu(online = false, sound?: { volume: number; onVolume: (v: number) => void }): Promise<'resume' | 'abandon'> {
+  const opened = openModal(
     `<div class="guide">
       <div class="sheet-kicker">MENÚ</div>
       <h2>Partida en curso</h2>
+      ${sound ? `<label class="volume">Volumen <input type="range" min="0" max="100" step="5" value="${Math.round(sound.volume * 100)}" aria-label="Volumen" /></label>` : ''}
       <div class="row"><button data-close data-choice="abandon">${online ? 'Salir de la sala' : 'Abandonar partida'}</button><button data-close data-choice="records">Récords</button><button class="primary" data-close data-primary>Seguir jugando</button></div>
     </div>`,
     'small',
   );
+  const slider = document.querySelector<HTMLInputElement>('#sheet .volume input');
+  if (slider && sound) slider.oninput = () => sound.onVolume(Number(slider.value) / 100);
+  const { button } = await opened;
   if (button?.dataset.choice === 'records') {
     await showRecords(loadRecords());
     return 'resume';

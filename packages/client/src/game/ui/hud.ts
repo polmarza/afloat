@@ -23,6 +23,8 @@ export interface HudHandlers {
   onTorch: (playerId: string) => void;
   isBusy: () => boolean;
   onMenu: () => void;
+  onSound: () => void;
+  isMuted: () => boolean;
 }
 
 /** Who plays whom. Local games: every human crew member from this computer. Online: more detail. */
@@ -53,7 +55,11 @@ export class Hud {
       if (takeover) this.seats.onTakeover?.(takeover.dataset.takeover!);
       else this.clickOption(e, this.options);
     };
-    $('hud-top').onclick = (e) => (e.target as HTMLElement).closest('#menu-button') && this.handlers.onMenu();
+    $('hud-top').onclick = (e) => {
+      const t = e.target as HTMLElement;
+      if (t.closest('#menu-button')) this.handlers.onMenu();
+      else if (t.closest('#sound-button')) this.toggleSound();
+    };
     $('crew-panel').onclick = (e) => {
       const t = e.target as HTMLElement;
       if (!this.state) return;
@@ -99,9 +105,22 @@ export class Hud {
     else if (opt.action) this.handlers.onAction(opt.action);
   }
 
+  private soundButton() {
+    const muted = this.handlers.isMuted();
+    const waves = muted ? '<path d="M15 9l5 6M20 9l-5 6" stroke="currentColor" stroke-width="2" fill="none"/>' : '<path d="M15 9.5a4 4 0 0 1 0 5M17.5 7a7.5 7.5 0 0 1 0 10" stroke="currentColor" stroke-width="2" fill="none"/>';
+    return `<button id="sound-button" aria-label="${muted ? 'Activar el sonido' : 'Silenciar'} (M)" title="${muted ? 'Activar el sonido' : 'Silenciar'} (M)"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/>${waves}</svg></button>`;
+  }
+
+  private toggleSound() {
+    this.handlers.onSound();
+    const btn = document.getElementById('sound-button');
+    if (btn) btn.outerHTML = this.soundButton();
+  }
+
   /** 1–9 trigger the action buttons (or the open door menu); L toggles the flashlight; Esc closes the menu. */
   private onKey(e: KeyboardEvent) {
     if (e.key === 'Escape') this.hideMenu();
+    if ((e.key === 'm' || e.key === 'M') && this.state && $('hud-top').style.display !== 'none' && (e.target as HTMLElement).tagName !== 'INPUT') this.toggleSound();
     if (isModalOpen() || this.handlers.isBusy() || !this.state || this.state.status !== 'playing') return;
     // Not while the setup screen is up (e.g. after abandoning a game).
     if ($('setup').style.display === 'flex') return;
@@ -168,7 +187,7 @@ export class Hud {
       <div class="oxygen${low}"><span>OXÍGENO</span><div class="bar"><div style="width:${pct}%"></div></div><b>${o2}</b><span class="muted">−${oxygenConsumption(s)}/ronda</span></div>
       <div class="oxygen hull${hullLow}" title="Integridad del casco: a 0 cede. Baja ${BALANCE.hull.perRound} por ronda y con fugas, derrumbes e incendios."><span>CASCO</span><div class="bar"><div style="width:${hullPct}%"></div></div><b>${s.hull}</b><span class="muted">/${BALANCE.hull.initial}</span></div>
       <div class="systems">${sys}<span class="sys ${pod.launched ? 'done' : ''}">Cápsula <b>${podState}</b></span></div>
-      <button id="menu-button" aria-label="Menú">Menú</button>`;
+      ${this.soundButton()}<button id="menu-button" aria-label="Menú">Menú</button>`;
   }
 
   /** One row: one crew member expanded (the active one, unless another is being viewed), the rest as portraits. */

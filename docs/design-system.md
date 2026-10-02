@@ -79,6 +79,13 @@ Figuras low-poly de bloques (estilo juguete/diorama) con cara sencilla: dos ojos
 - **Imagen para compartir** (`og-image.jpg`, 1200×630): como el hero de la portada: rombo y AFLOAT en ámbar, la frase del juego en grande, la línea de presentación en gris y, a la derecha, los camarotes en 3D con tres tripulantes. Se pinta con el propio juego (`og.html`).
 - Los PNG y la imagen para compartir se regeneran con `npm run brand -w @afloat/client` (con `npm run dev` arrancado). Hay que hacerlo si cambia el arte de los camarotes, los tripulantes o los textos del hero.
 
+## Sonido
+
+- Todo sintetizado con Web Audio (`packages/client/src/game/audio/`): tonos y ruido filtrado, sin archivos. Estilo: metálico, grave y apagado, como el interior de un submarino; los avisos de partida son notas cortas y limpias.
+- Cada suceso suena al animarse (tabla en `openspec/specs/sound/spec.md` y `audio/sfx.ts`). Los pasos suenan casilla a casilla (chapoteo en salas inundadas).
+- Ambiente durante la partida: zumbido grave que respira; con la energía sin reparar, alarma en dos notas graves cada 3,5 s.
+- Botón de altavoz en la barra superior (tecla M) y volumen en el menú; por defecto activado al 70 %, recordado en `localStorage` (`afloat.sound`). La portada no suena.
+
 ## Tipografía
 
 Provisional (prototipo): **Barlow Condensed** (Google Fonts, OFL) para el HUD y los nombres de sala. Se revisará al elegir el estilo visual: el estilo pixelado pediría una fuente pixel; el diorama, una más limpia o elegante.

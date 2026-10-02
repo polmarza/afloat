@@ -1,6 +1,6 @@
 # Créditos y licencias de assets
 
-**Decisión del proyecto**: todo el arte del juego se genera por código. No se usa ningún asset gráfico de terceros.
+**Decisión del proyecto**: todo el arte y el sonido del juego se generan por código (el sonido se sintetiza en el navegador). No se usa ningún asset gráfico ni sonoro de terceros.
 
 | Asset | Autor | Licencia | Dónde está |
 |---|---|---|---|

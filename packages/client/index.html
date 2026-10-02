@@ -248,6 +248,10 @@
       .levels .level:disabled { opacity: .7; }
       .bot-turn button { margin-left: 10px; }
       #menu-button { margin-left: 8px; pointer-events: auto; font-size: 15px; padding: 4px 12px; }
+      #sound-button { margin-left: 8px; pointer-events: auto; padding: 3px 8px; line-height: 0; color: var(--muted); }
+      #sound-button:hover { color: var(--text); }
+      .volume { display: flex; align-items: center; gap: 12px; margin: 6px 0 14px; }
+      .volume input { flex: 1; accent-color: var(--amber); }
 
       /* Modals: character sheet, item sheet, item found, turn popup */
       #sheet { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(2, 3, 4, 0.78); z-index: 40; }
