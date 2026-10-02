@@ -5,7 +5,7 @@
 🎮 **Jugar:** https://afloat.polmarza.workers.dev
 🎬 **Vídeo de una partida:** [docs/media/afloat-partida-maquinas.mp4](docs/media/afloat-partida-maquinas.mp4)
 
-![El submarino a mitad de partida, con la cápsula de escape a la derecha](docs/media/submarino.jpg)
+[![Portada de AFLOAT: el submarino 3D gira detrás del logo](docs/media/portada.jpg)](https://afloat.polmarza.workers.dev)
 
 Una alarma os despierta dentro de un submarino que se hunde. Las salas están a oscuras hasta que alguien abre la puerta, el oxígeno es común y se acaba. El equipo gana si **al menos un tripulante sale a flote**, así que habrá que repartir recursos y, a veces, sacrificar a alguien.
 
@@ -19,9 +19,11 @@ Una alarma os despierta dentro de un submarino que se hunde. Las salas están a 
 - **Tres acciones por turno:** moverse, abrir puertas (cinco tipos), buscar, reparar, curar, dar y usar objetos.
 - **Tiradas de 1d6** con modificadores de rol y objeto.
 - **Tres sistemas que reparar:** energía, soporte vital y bombas.
-- **Dos salidas:** cápsula de escape (plazas limitadas) o emerger el submarino.
+- **Dos salidas:** cápsula de escape (una plaza) o emerger el submarino.
 - **Salas especiales:** invernadero, laboratorio y cantina.
 - **Tres dificultades** y puntuación con desglose. Los récords se guardan en el navegador.
+
+![El submarino a mitad de partida, con la cápsula de escape a la derecha](docs/media/submarino.jpg)
 
 | Cinco tripulantes | Exploración | La cápsula |
 |---|---|---|
@@ -30,7 +32,7 @@ Una alarma os despierta dentro de un submarino que se hunde. Las salas están a 
 
 ## Estado
 
-El MVP local ya es jugable de principio a fin. El multijugador online está planificado. Consulta el [roadmap](docs/roadmap.md).
+El MVP local ya es jugable de principio a fin, con una portada que explica el juego, la tripulación, los objetos, las salas y los eventos. El multijugador online está planificado. Consulta el [roadmap](docs/roadmap.md).
 
 ## Desarrollo
 

@@ -28,6 +28,63 @@
       input, select { font: inherit; color: var(--text); background: #11151a; border: 1px solid var(--line); padding: 5px 8px; }
       .muted { color: var(--muted); }
 
+      /* Landing page (over the live ship) */
+      #landing { position: fixed; inset: 0; z-index: 15; display: none; overflow-y: auto; overflow-x: hidden; scroll-behavior: smooth; font-size: 19px; line-height: 1.4; }
+      .landing-nav { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; gap: 16px; padding: 10px 24px; background: rgba(4, 5, 6, 0.94); backdrop-filter: blur(6px); border-bottom: 1px solid rgba(58, 66, 72, 0.5); }
+      .landing-nav button:not(.primary) { background: none; border: none; padding: 6px 4px; color: var(--muted); font-size: 17px; }
+      .landing-nav button:not(.primary):hover { color: var(--text); }
+      .landing-nav .landing-logo { color: var(--amber) !important; font-weight: 700; letter-spacing: .25em; font-size: 20px !important; }
+      .landing-links { display: flex; gap: 14px; flex: 1; flex-wrap: wrap; }
+      .landing-hero { position: relative; height: calc(100vh - 56px); min-height: 460px; display: flex; align-items: center; justify-content: center; text-align: center; padding: 0 16px; background: radial-gradient(ellipse at center, rgba(4, 5, 6, 0.15), rgba(4, 5, 6, 0.65) 75%), linear-gradient(transparent 70%, #040506); }
+      .landing-hero-text { max-width: 760px; text-shadow: 0 2px 18px #000, 0 0 2px #000; }
+      .landing-hero h1 { margin: 0; font-size: clamp(64px, 14vw, 150px); letter-spacing: .22em; color: var(--amber); line-height: 1; padding-left: .22em; }
+      .landing-tagline { font-size: clamp(22px, 3.2vw, 30px); margin: 14px 0 26px; }
+      .landing-cta { font-size: 26px; padding: 10px 44px; }
+      .landing-meta { color: var(--muted); letter-spacing: .06em; margin-top: 18px; }
+      .landing-down { position: absolute; bottom: 18px; left: 50%; transform: translateX(-50%); background: none !important; border: none !important; font-size: 40px; color: var(--muted); animation: landing-bob 2s ease-in-out infinite; }
+      @keyframes landing-bob { 50% { transform: translate(-50%, 6px); } }
+      .landing-section { background: #040506; padding: 72px max(16px, calc((100vw - 1160px) / 2)); border-top: 1px solid #14181b; }
+      .landing-section h2 { font-size: clamp(32px, 5vw, 46px); margin: 4px 0 14px; letter-spacing: .02em; }
+      .landing-section > p { max-width: 760px; }
+      .landing-kicker { color: var(--amber); letter-spacing: .2em; font-size: 15px; }
+      .landing-steps { list-style: none; counter-reset: step; padding: 0; margin: 28px 0 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 18px; }
+      .landing-steps li { counter-increment: step; background: #0c0f12; border: 1px solid var(--line); border-left: 4px solid var(--amber); padding: 18px 20px; }
+      .landing-steps li::before { content: counter(step, decimal-leading-zero); color: var(--amber); font-weight: 700; font-size: 28px; }
+      .landing-steps h3 { margin: 2px 0 6px; font-size: 24px; }
+      .landing-steps p { margin: 0; color: #c4cacf; }
+      .landing-grid, .landing-crew { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px; margin-top: 20px; }
+      .landing-crew { grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); }
+      .landing-card { background: #0c0f12; border: 1px solid var(--line); border-top: 4px solid var(--line); padding: 16px 18px; }
+      .landing-card h3 { margin: 2px 0 4px; font-size: 24px; }
+      .landing-card p { margin: 8px 0 0; }
+      .landing-card ul { margin: 10px 0 0; padding-left: 20px; }
+      .landing-crew img { width: 100%; aspect-ratio: 1; display: block; margin-bottom: 10px; background: radial-gradient(circle at 50% 38%, #34404a, #0b0e10 75%); }
+      .landing-crew p { font-size: 17px; color: #c4cacf; }
+      .landing-card.role-engineer { border-top-color: #e8a33a; }
+      .landing-card.role-medic { border-top-color: #e9e9e9; }
+      .landing-card.role-soldier { border-top-color: #6f9440; }
+      .landing-card.role-hacker { border-top-color: #4aa3e0; }
+      .landing-card.role-diver { border-top-color: #1fb5a5; }
+      .landing-item { border-top-color: var(--amber); }
+      .landing-item img { width: 110px; height: 110px; display: block; background: radial-gradient(circle at 50% 45%, #2c353d, #0b0e10 72%); }
+      .landing-item .muted { font-size: 17px; }
+      .landing-strong { font-weight: 600; color: var(--amber); }
+      .landing-tags { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+      .landing-tags span { font-size: 14px; letter-spacing: .06em; padding: 2px 8px; border: 1px solid var(--line); color: var(--muted); }
+      .landing-group { margin: 34px 0 0; font-size: 22px; color: var(--muted); letter-spacing: .06em; }
+      .landing-room { border-top-color: var(--cyan); }
+      .landing-flooded { margin-top: 16px; border-top-color: #2a7fd0; max-width: 760px; }
+      .landing-event { border-top-color: var(--red); }
+      .landing-event.event-calm { border-top-color: var(--green); }
+      .landing-footer { background: #040506; border-top: 1px solid #14181b; padding: 48px 16px 64px; text-align: center; }
+      .landing-footer a { color: var(--amber); }
+      .row-group { display: flex; gap: 10px; }
+      @media (max-width: 720px) {
+        .landing-links { display: none; }
+        .landing-nav { justify-content: space-between; padding: 8px 16px; }
+        .landing-section { padding-top: 52px; padding-bottom: 52px; }
+      }
+
       /* Setup and dialogs */
       #setup, #dialog { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(2, 3, 4, 0.82); z-index: 20; }
       .setup, .panel { background: var(--panel); border: 1px solid var(--line); padding: 28px 32px; width: min(720px, 92vw); font-size: 18px; }
@@ -263,6 +320,7 @@
     <div id="toasts"></div>
     <div id="menu"></div>
     <div id="tooltip"></div>
+    <div id="landing"></div>
     <div id="setup"></div>
     <div id="dialog"></div>
     <div id="sheet"></div>

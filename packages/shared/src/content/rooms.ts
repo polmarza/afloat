@@ -102,6 +102,15 @@ export const ROOM_GUIDE: Partial<Record<RoomType, { title: string; text: string;
   },
 };
 
+/** One line for the rooms without a guide (they only have scenery and hidden items). */
+export const ROOM_BLURBS: Partial<Record<RoomType, string>> = {
+  quarters: 'Donde os despierta la alarma. La única sala con luz al empezar, y siempre esconde algún objeto.',
+  infirmary: 'Camillas y botiquines de pared.',
+  storage: 'Cajas y estanterías.',
+  torpedo: 'Tubos de lanzamiento y torpedos en sus raíles.',
+  corridor: 'Conecta salas.',
+};
+
 export const FLOODED_GUIDE = {
   title: 'Sala inundada',
   text: 'Entrar cuesta 2 acciones y quien termine la ronda dentro pierde 1 vida. El buzo entra con 1 acción y no se hace daño; el traje de buzo también protege.',

@@ -106,7 +106,7 @@ survemarine/                   (carpeta del proyecto; el juego se llama AFLOAT)
                 ├── styles.ts      Estilo visual: paleta y luces (industrial oscuro)
                 ├── tweens.ts      Animaciones
                 ├── records.ts     Tabla de récords en localStorage (con acciones para poder reproducirlas)
-                └── ui/            setup.ts (preparación), hud.ts (paneles, avisos, pantalla final),
+                └── ui/            landing.ts (portada), setup.ts (preparación), hud.ts (paneles, avisos, pantalla final),
                                    options.ts (acciones disponibles), sheet.ts (fichas, resumen, menú, récords), modal.ts
 ```
 

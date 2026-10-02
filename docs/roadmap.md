@@ -86,4 +86,4 @@ Objetivo: cada amigo juega desde su casa mientras hablan por Discord.
 - [ ] Arte final pulido y música.
 - [ ] Jugar dentro de Discord (Activities).
 - [x] Nombre definitivo: **AFLOAT**.
-- [ ] Pantalla de título.
+- [x] Pantalla de título: portada con el submarino 3D de fondo y secciones de cómo se juega, tripulación, objetos, salas y eventos (adelantada a la fase 2).

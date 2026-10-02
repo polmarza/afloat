@@ -32,6 +32,7 @@ export function showSetup(
   previous: NewGame | null,
   tutorialDefault: boolean,
   onStart: (game: NewGame, tutorial: boolean) => void,
+  onHome: () => void,
 ) {
   // First game ever (no previous setup): tutorial on by default.
   let tutorial = previous ? tutorialDefault : true;
@@ -69,7 +70,7 @@ export function showSetup(
       <div class="counts">${[2, 3, 4, 5].map((n) => `<button class="count ${n === count ? 'selected' : ''}" data-count="${n}">${n}</button>`).join('')}</div>
       <h2>Dificultad</h2>
       <div class="levels">${DIFFICULTY_ORDER.map((d) => `<button class="level ${d === difficulty ? 'selected' : ''}" data-level="${d}"><b>${DIFFICULTY_NAMES[d]}</b><span>${DIFFICULTY_TEXT[d]}</span><em>Puntos ×${BALANCE.score.multiplier[d]}</em></button>`).join('')}</div>
-      <div class="row"><button data-records>Récords</button><button class="primary" data-next>Elegir personajes</button></div>
+      <div class="row"><div class="row-group"><button data-home>Portada</button><button data-records>Récords</button></div><button class="primary" data-next>Elegir personajes</button></div>
     </div>`;
 
   const pickView = () => {
@@ -152,9 +153,13 @@ export function showSetup(
   const start = () => {
     seed = root.querySelector<HTMLInputElement>('#setup-seed')!.value.trim() || randomSeed();
     tutorial = root.querySelector<HTMLInputElement>('#setup-tutorial')!.checked;
+    close();
+    onStart({ seed, difficulty, players: picks.map((p) => ({ ...p })) }, tutorial);
+  };
+
+  const close = () => {
     window.removeEventListener('keydown', onKey);
     root.style.display = 'none';
-    onStart({ seed, difficulty, players: picks.map((p) => ({ ...p })) }, tutorial);
   };
 
   const back = () => {
@@ -217,6 +222,10 @@ export function showSetup(
       root.querySelector<HTMLInputElement>('#setup-seed')!.value = seed;
     } else if ('start' in d) start();
     else if ('records' in d) void showRecords(loadRecords());
+    else if ('home' in d) {
+      close();
+      onHome();
+    }
   };
   root.oninput = (e) => {
     const t = e.target as HTMLInputElement;

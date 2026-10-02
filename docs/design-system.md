@@ -83,6 +83,12 @@ Provisional (prototipo): **Barlow Condensed** (Google Fonts, OFL) para el HUD y 
 - **Paneles**: bordes rectos de 1–2 px en `#6c7580`, esquinas cortadas en diagonal (estilo panel metálico), sin sombras difusas.
 - **Botones de acción**: icono + etiqueta; muestran el coste en acciones y, si hay tirada, la probabilidad de éxito.
 - **Densidad**: HUD mínimo en los bordes; el submarino ocupa el centro.
+- **Portada (landing):** lo primero que se ve al abrir la web (`ui/landing.ts`).
+  - Cabecera a pantalla completa con el logo, la frase del juego y "Jugar", sobre un submarino 3D en vivo (semilla fija `PERISCOPIO`, todas las salas visibles, cámara girando despacio, alarma). Solo se pinta mientras la cabecera está en pantalla.
+  - Menú fijo con enlaces a las secciones (se ocultan por debajo de 720 px) y "Jugar".
+  - Secciones sobre fondo opaco: Cómo se juega (6 pasos numerados, borde ámbar), Tripulación (retrato y ficha con el color del rol), Objetos (imagen, efecto en ámbar, se gasta o permanente, copias en el mazo), Salas (sistemas, especiales y resto, borde cian; aparte, la sala inundada) y Eventos (borde rojo, verde para "Calma"; daño al casco u oxígeno y copias).
+  - Todos los textos salen del contenido (`content/`) y de `BALANCE`; las descripciones de las salas sin guía están en `ROOM_BLURBS`.
+  - "Jugar" abre el asistente; su primer paso tiene un botón "Portada" para volver.
 - **Pantalla inicial (asistente):**
   1. Número de jugadores.
   2. Para cada jugador, un carrusel con las fichas de los personajes aún libres (flechas o ← →) y "Elegir". Después, el nombre ("Jugador N" por defecto).
