@@ -84,9 +84,11 @@ Provisional (prototipo): **Barlow Condensed** (Google Fonts, OFL) para el HUD y 
 - **Botones de acción**: icono + etiqueta; muestran el coste en acciones y, si hay tirada, la probabilidad de éxito.
 - **Densidad**: HUD mínimo en los bordes; el submarino ocupa el centro.
 - **Portada (landing):** lo primero que se ve al abrir la web (`ui/landing.ts`).
-  - Cabecera a pantalla completa con el logo, la frase del juego y "Jugar", sobre un submarino 3D en vivo (semilla fija `PERISCOPIO`, todas las salas visibles, cámara girando despacio, alarma). Solo se pinta mientras la cabecera está en pantalla.
-  - Menú fijo con enlaces a las secciones (se ocultan por debajo de 720 px) y "Jugar".
-  - Secciones sobre fondo opaco: Cómo se juega (6 pasos numerados, borde ámbar), Tripulación (retrato y ficha con el color del rol), Objetos (imagen, efecto en ámbar, se gasta o permanente, copias en el mazo), Salas (sistemas, especiales y resto, borde cian; aparte, la sala inundada) y Eventos (borde rojo, verde para "Calma"; daño al casco u oxígeno y copias).
+  - Cabecera en dos columnas (una sola por debajo de 900 px): a la izquierda el nombre (pequeño), la frase del juego (grande) y "Jugar"; a la derecha, los camarotes en 3D montándose con tres tripulantes.
+  - Menú fijo con enlaces a las secciones (se ocultan por debajo de 720 px), GitHub y "Jugar".
+  - **Viñetas 3D** (`vignette.ts`, escenas en `ui/landingScenes.ts`): salas reales de submarinos generados, pintadas con el `World` y los tripulantes del juego. Las salas caen pieza a pieza como al descubrirlas; los tripulantes caen después y encienden la linterna. Encima, marcadores con el estilo del HUD (rombos de acción, barras de oxígeno y casco, fases de la ronda) y avisos. Solo se dibujan mientras están en pantalla.
+  - Cómo se juega y Salas son **sliders**: escena a la izquierda, número, título, texto, consejo, flechas y puntos a la derecha; la escena se repite tras una pausa.
+  - Tripulación (retrato y ficha con el color del rol), Objetos (imagen, efecto en ámbar, se gasta o permanente, copias en el mazo) y Eventos (borde rojo, verde para "Calma"; daño al casco u oxígeno y copias) siguen como tarjetas.
   - Todos los textos salen del contenido (`content/`) y de `BALANCE`; las descripciones de las salas sin guía están en `ROOM_BLURBS`.
   - "Jugar" abre el asistente; su primer paso tiene un botón "Portada" para volver.
 - **Pantalla inicial (asistente):**

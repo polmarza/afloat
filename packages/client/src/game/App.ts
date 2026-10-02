@@ -4,11 +4,9 @@
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { ROOM_D, ROOM_W } from '@afloat/shared/config/balance';
-import { CHARACTERS } from '@afloat/shared/content/characters';
 import { ITEMS } from '@afloat/shared/content/items';
-import { ROLE_ORDER } from '@afloat/shared/content/roles';
 import { FLOODED_GUIDE, ROOM_GUIDE, ROOM_NAMES, SYSTEM_NAMES } from '@afloat/shared/content/rooms';
-import { createGame, scoreGame, type Action, type GameEvent, type GameState, type NewGame } from '@afloat/shared/engine';
+import { scoreGame, type Action, type GameEvent, type GameState, type NewGame } from '@afloat/shared/engine';
 import { CrewFigure } from './crew';
 import { LocalSession, type Session } from './session';
 import { Materials } from './materials';
@@ -34,9 +32,6 @@ const STEP_MS = 260;
 /** Pause before each computer action, so humans can follow what it does. */
 const BOT_PAUSE_MS = 650;
 const ELEVATION = 0.86;
-/** Ship shown behind the landing page, and how fast the camera circles it (radians/s). */
-const SHOWCASE_SEED = 'PERISCOPIO';
-const SHOWCASE_SPIN = 0.07;
 
 export class App {
   private readonly renderer: THREE.WebGLRenderer;
@@ -69,12 +64,6 @@ export class App {
   private phaseNow: GameState['phase'] = 'crew';
   /** Where to walk after an engine MOVE, when the player clicked a specific tile. */
   private moveGoal: Cell | null = null;
-  /** The landing page is open: the ship behind it is only for show. */
-  private showcase = false;
-  /** Whether the landing hero (and so the ship) is on screen; off-screen we skip rendering. */
-  private showcaseVisible = true;
-  /** Which walls are lowered depends on the camera's quadrant; update them only when it changes. */
-  private wallQuadrant = '';
 
   private azimuth = Math.PI / 4;
   private azimuthGoal = Math.PI / 4;
@@ -127,48 +116,7 @@ export class App {
   // --------------------------------------------------------------- landing
 
   private openLanding() {
-    try {
-      this.buildShowcase();
-    } catch (err) {
-      // The landing still works over a plain dark background.
-      console.error(err);
-      this.closeShowcase();
-    }
-    showLanding(document.getElementById('landing')!, this.portraits, this.itemImages, {
-      onPlay: () => {
-        this.closeShowcase();
-        this.openSetup();
-      },
-      onHeroVisible: (visible) => (this.showcaseVisible = visible),
-    });
-  }
-
-  /** A generated ship with every room on view, as if fully explored. Display only: no rules run on it. */
-  private buildShowcase() {
-    const { state } = createGame({
-      seed: SHOWCASE_SEED,
-      players: ROLE_ORDER.slice(0, 3).map((role) => ({ name: CHARACTERS[role].name, role, bot: true })),
-    });
-    const rooms = Object.fromEntries(Object.entries(state.rooms).map(([id, r]) => [id, { ...r, discovered: true }]));
-    this.state = { ...state, rooms };
-    this.showcase = true;
-    this.showcaseVisible = true;
-    this.torches.clear();
-    for (const p of this.state.players) this.torches.set(p.id, true);
-    this.buildScene();
-  }
-
-  private closeShowcase() {
-    this.showcase = false;
-    this.tweens.clear();
-    // Materials are shared with the game; only the geometry is this scene's own.
-    this.scene.traverse((obj) => (obj as THREE.Mesh).geometry?.dispose());
-    this.world = null;
-    this.crew.clear();
-    this.scene = new THREE.Scene();
-    this.wallQuadrant = '';
-    // The game camera starts from its usual corner.
-    this.azimuth = this.azimuthGoal = Math.PI / 4;
+    showLanding(document.getElementById('landing')!, this.materials, this.portraits, this.itemImages, () => this.openSetup());
   }
 
   // ------------------------------------------------------------------ game
@@ -661,15 +609,9 @@ export class App {
     const dt = Math.min(this.clock.getDelta(), 0.05);
     const t = this.clock.elapsedTime;
     this.tweens.tick(performance.now());
-    if (this.showcase) {
-      if (!this.showcaseVisible) return;
-      this.azimuth += dt * SHOWCASE_SPIN;
-      this.syncWalls();
-    }
     if (this.world) {
-      // The camera follows whoever has the turn (no one on the landing page).
-      const playing = !this.showcase && this.state.status === 'playing';
-      const focus = playing ? this.crew.get(activePlayer(this.state).id)?.fig.root.position : null;
+      // The camera follows whoever has the turn.
+      const focus = this.state.status === 'playing' ? this.crew.get(activePlayer(this.state).id)?.fig.root.position : null;
       this.target.lerp(focus ? new THREE.Vector3(focus.x, 0, focus.z) : this.exploredCentre(), Math.min(1, dt * 2.5));
       const wanted = Math.max(10, this.fitDistance() * this.zoom);
       this.distance += (wanted - this.distance) * Math.min(1, dt * 2.5);
@@ -681,17 +623,14 @@ export class App {
       );
       this.camera.lookAt(this.target);
       for (const c of this.crew.values()) c.fig.update(dt, t);
-      const hero = playing ? this.crew.get(activePlayer(this.state).id)?.fig : null;
+      const hero = this.state.status === 'playing' ? this.crew.get(activePlayer(this.state).id)?.fig : null;
       if (hero) {
         hero.root.updateMatrixWorld(true);
         hero.beamPose(this.beamPos, this.heroBeam.target.position);
         this.heroBeam.position.copy(this.beamPos);
         this.heroBeam.intensity = hero.beamIntensity();
         this.world.setFocus(hero.root.position.x, hero.root.position.z);
-      } else {
-        this.heroBeam.intensity = 0;
-        this.world.setFocus(this.target.x, this.target.z);
-      }
+      } else this.heroBeam.intensity = 0;
       this.world.update(t);
     }
     this.renderer.render(this.scene, this.camera);
@@ -720,16 +659,6 @@ export class App {
   }
 
 
-  /** Lowers the walls between the camera and the ship when the camera changes quadrant. */
-  private syncWalls() {
-    const x = Math.sin(this.azimuth);
-    const z = Math.cos(this.azimuth);
-    const quadrant = `${Math.sign(Math.round(x * 50))}${Math.sign(Math.round(z * 50))}`;
-    if (quadrant === this.wallQuadrant) return;
-    this.wallQuadrant = quadrant;
-    this.world?.updateWallsForCamera(this.azimuth);
-  }
-
   private rotateCamera(dir: number) {
     const from = this.azimuth;
     this.azimuthGoal += (dir * Math.PI) / 2;
@@ -741,13 +670,12 @@ export class App {
   // ------------------------------------------------------------------- input
 
   private onKey(e: KeyboardEvent) {
-    if (this.showcase || (e.target as HTMLElement).tagName === 'INPUT') return;
+    if ((e.target as HTMLElement).tagName === 'INPUT') return;
     if (e.key === 'q' || e.key === 'Q') this.rotateCamera(-1);
     if (e.key === 'e' || e.key === 'E') this.rotateCamera(1);
   }
 
   private onWheel(e: WheelEvent) {
-    if (this.showcase) return;
     e.preventDefault();
     this.zoom = THREE.MathUtils.clamp(this.zoom * (1 + Math.sign(e.deltaY) * 0.08), 0.4, 1.8);
   }
@@ -761,7 +689,7 @@ export class App {
   }
 
   private onPointerMove(e: PointerEvent) {
-    if (!this.world || this.showcase) return;
+    if (!this.world) return;
     const hit = this.pick(e);
     const s = this.state;
     if (hit?.kind === 'tile') {
@@ -780,7 +708,7 @@ export class App {
   }
 
   private onPointerDown(e: PointerEvent) {
-    if (!this.world || this.showcase || this.busy || this.botRunning || this.state.status !== 'playing' || e.button !== 0) return;
+    if (!this.world || this.busy || this.botRunning || this.state.status !== 'playing' || e.button !== 0) return;
     const hit = this.pick(e);
     this.hud.hideMenu();
     if (!hit) return;

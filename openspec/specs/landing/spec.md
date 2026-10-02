@@ -23,21 +23,21 @@ Al cargar la web el sistema SHALL mostrar la portada antes del asistente de prep
 - WHEN el jugador pulsa "Portada"
 - THEN vuelve a la portada sin perder la configuración de la partida anterior
 
-### Requirement: Fondo 3D en vivo
-La cabecera SHALL mostrar de fondo un submarino generado por el motor con una semilla fija, con todas las salas visibles, la cámara girando lentamente y luz de alarma. MUST NOT usar vídeo ni imágenes de terceros. La escena MUST liberarse al empezar la partida.
+### Requirement: Escena del hero
+La cabecera SHALL mostrar el nombre, la frase del juego (más grande que el nombre) y el botón Jugar a un lado, y al otro una escena 3D en vivo: los camarotes se montan cayendo pieza a pieza, como al descubrir una sala en el juego, y caen tres tripulantes con la linterna encendida. MUST NOT usar vídeo ni imágenes de terceros. Las escenas 3D de la portada MUST liberarse al empezar la partida y solo se dibujan mientras están en pantalla.
 
-#### Scenario: Escena de fondo
+#### Scenario: Escena del hero
 - GIVEN la portada abierta
-- WHEN pasan unos segundos
-- THEN el submarino gira lentamente detrás del texto y el texto sigue siendo legible
+- WHEN termina de cargar
+- THEN los camarotes caen montándose y después aparecen tres tripulantes en ellos
 
-#### Scenario: Falla la escena de fondo
-- GIVEN que el submarino de fondo no se puede construir
-- WHEN se abre la portada
-- THEN se muestra un fondo oscuro liso y el resto de la portada funciona
+#### Scenario: Enlace al código
+- GIVEN el menú fijo de la portada
+- WHEN se pulsa GitHub
+- THEN se abre el repositorio del juego en otra pestaña
 
 ### Requirement: Secciones informativas
-La portada SHALL incluir, en este orden, las secciones Cómo se juega, Tripulación, Objetos, Salas y Eventos. Sus textos MUST salir del contenido del juego (`packages/shared/src/content/`) y de `BALANCE` para los números, de modo que un cambio de contenido o balance se refleje en la portada sin editarla.
+La portada SHALL incluir, en este orden, las secciones Cómo se juega, Tripulación, Objetos, Salas y Eventos. Cómo se juega y Salas SHALL ser sliders: una diapositiva cada vez, con su texto, flechas y puntos para pasar, y una escena 3D que se monta con la animación de caída y se repite tras una pausa. Sus textos MUST salir del contenido del juego (`packages/shared/src/content/`) y de `BALANCE` para los números, de modo que un cambio de contenido o balance se refleje en la portada sin editarla.
 
 #### Scenario: Tripulación
 - GIVEN la sección Tripulación
@@ -53,6 +53,16 @@ La portada SHALL incluir, en este orden, las secciones Cómo se juega, Tripulaci
 - GIVEN que se cambia la descripción de un objeto en `content/items.ts`
 - WHEN se abre la portada
 - THEN la sección Objetos muestra la nueva descripción
+
+#### Scenario: Diapositiva de acciones
+- GIVEN la diapositiva "3 acciones por turno"
+- WHEN se muestra
+- THEN un tripulante abre una puerta (la sala de al lado cae montándose), se mueve a ella y busca hasta encontrar un objeto, y un marcador de 3 rombos gasta uno por acción
+
+#### Scenario: Diapositiva de una sala
+- GIVEN el slider de Salas
+- WHEN se pasa a "Invernadero"
+- THEN se monta un invernadero en 3D y se muestran su nombre, para qué sirve y un consejo
 
 #### Scenario: Eventos
 - GIVEN la sección Eventos
