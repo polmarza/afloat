@@ -8,7 +8,8 @@ import { ITEMS } from '@afloat/shared/content/items';
 import { FLOODED_GUIDE, ROOM_GUIDE, ROOM_NAMES, SYSTEM_NAMES } from '@afloat/shared/content/rooms';
 import { scoreGame, type Action, type GameEvent, type GameState, type NewGame } from '@afloat/shared/engine';
 import { CrewFigure } from './crew';
-import { LocalSession, type Session } from './session';
+import { LocalSession, type PlayedAction, type Session } from './session';
+import type { RemoteSession } from './online/remoteSession';
 import { Materials } from './materials';
 import { STYLE } from './styles';
 import { ease, Tweens } from './tweens';
@@ -16,6 +17,7 @@ import { renderItemImages, renderPortraits, type ItemImages, type Portraits } fr
 import { Hud } from './ui/hud';
 import { showLanding } from './ui/landing';
 import { isModalOpen } from './ui/modal';
+import { codeFromUrl, leaveRoom, showPlayMenu } from './ui/online';
 import { activePlayer, beyondName, DOOR_TYPE_NAME, doorOptions } from './ui/options';
 import { showSetup } from './ui/setup';
 import { newRecord, saveRecord } from './records';
@@ -58,8 +60,16 @@ export class App {
   private busy = false;
   /** A computer-controlled crew member is playing its turn. */
   private botRunning = false;
-  /** Where the authoritative state lives (local for now; online later). */
+  /** Where the authoritative state lives: this browser (local) or the room server (online). */
   private session!: Session;
+  /** The online room, while in one. */
+  private remote: RemoteSession | null = null;
+  /** Accepted actions waiting to be animated, in order (ours, other players', the computer's). */
+  private readonly queue: PlayedAction[] = [];
+  private pumping = false;
+  /** Bumped whenever a game view is built or closed: loops of the previous one stop. */
+  private gameGen = 0;
+  private readonly subscribed = new WeakSet<Session>();
   /** Round phase while events are being played back. */
   private phaseNow: GameState['phase'] = 'crew';
   /** Where to walk after an engine MOVE, when the player clicked a specific tile. */
@@ -94,7 +104,7 @@ export class App {
         onAction: (a) => this.dispatch(a),
         onLaunch: () => this.launchPod(),
         onTorch: (id) => this.toggleTorch(id),
-        isBusy: () => this.busy || this.botRunning,
+        isBusy: () => this.busy || this.botRunning || this.pumping || !this.myTurn(),
         onMenu: () => void this.openMenu(),
       },
       this.portraits,
@@ -110,13 +120,31 @@ export class App {
     container.addEventListener('wheel', (e) => this.onWheel(e), { passive: false });
     this.resize();
     this.renderer.setAnimationLoop(() => this.frame());
-    this.openLanding();
+    // An invitation link goes straight to its room.
+    const code = codeFromUrl();
+    if (code) this.openPlayMenu(code);
+    else this.openLanding();
   }
 
   // --------------------------------------------------------------- landing
 
   private openLanding() {
-    showLanding(document.getElementById('landing')!, this.materials, this.portraits, this.itemImages, () => this.openSetup());
+    showLanding(document.getElementById('landing')!, this.materials, this.portraits, this.itemImages, () => this.openPlayMenu());
+  }
+
+  /** Local or online, and the online rooms. */
+  private openPlayMenu(code: string | null = null) {
+    showPlayMenu(
+      document.getElementById('setup')!,
+      {
+        portraits: this.portraits,
+        onLocal: () => this.openSetup(),
+        onHome: () => this.openLanding(),
+        onGameStart: (session) => void this.beginOnline(session),
+        onBackToLobby: () => this.closeGame(),
+      },
+      code,
+    );
   }
 
   // ------------------------------------------------------------------ game
@@ -136,38 +164,125 @@ export class App {
   }
 
   private async start(game: NewGame) {
-    this.setup = game;
-    this.session = new LocalSession(game);
-    const events = this.session.startEvents;
-    this.state = this.session.state;
+    this.remote = null;
+    this.hud.setSeats(null);
+    await this.begin(new LocalSession(game));
+  }
+
+  private async beginOnline(session: RemoteSession) {
+    if (this.remote !== session) {
+      this.remote = session;
+      // Seats changed (someone dropped, came back, the host moved): refresh the HUD.
+      session.on('room', () => this.session === session && this.world && this.hud.render(this.state, this.busy));
+      // Back after a lost connection: the whole game again, without animating what was missed.
+      session.on('snapshot', () => this.session === session && this.world && void this.begin(session, false));
+    }
+    this.hud.setSeats({
+      controls: (id) => session.controls(id),
+      seat: (id) => session.seatOf(id),
+      isMe: (id) => session.state.players.findIndex((p) => p.id === id) === session.you,
+      isHost: () => session.isHost,
+      onTakeover: (id) => session.send({ type: 'botTakeover', seat: session.state.players.findIndex((p) => p.id === id) }),
+    });
+    await this.begin(session);
+  }
+
+  /** Shows a game and plays whatever arrives from the session. `fresh`: a new game (intro and first round summary). */
+  private async begin(session: Session, fresh = true) {
+    this.session = session;
+    this.setup = session.setup;
+    const gen = ++this.gameGen;
+    this.queue.length = 0;
+    this.pumping = false;
+    this.botRunning = false;
+    if (!this.subscribed.has(session)) {
+      this.subscribed.add(session);
+      session.onResult((played) => this.session === session && this.enqueue(played));
+    }
+    this.state = session.state;
     this.torches.clear();
     this.guided.clear();
     // The computer's crew light their way from the start.
     for (const p of this.state.players) if (p.bot) this.torches.set(p.id, true);
     this.buildScene();
     this.hud.render(this.state, false);
-    this.busy = true;
-    if (this.tutorial) await showIntro();
-    await this.showRoundSummary(events);
-    this.busy = false;
-    void this.runBots();
+    if (fresh) {
+      this.busy = true;
+      if (this.tutorial) await showIntro();
+      await this.showRoundSummary(session.startEvents);
+      this.busy = false;
+    }
+    if (gen !== this.gameGen) return;
+    void this.pump();
   }
 
-  /** While the turn belongs to a computer-controlled crew member, let it play. */
+  /** Leaves the game view (abandoned, or back to the online waiting room). */
+  private closeGame() {
+    this.gameGen++;
+    this.tweens.clear();
+    this.world = null;
+    this.crew.clear();
+    this.scene = new THREE.Scene();
+    this.queue.length = 0;
+    this.pumping = false;
+    this.botRunning = false;
+    this.busy = false;
+    this.hud.hide();
+    document.getElementById('toasts')!.innerHTML = '';
+    document.getElementById('dialog')!.style.display = 'none';
+  }
+
+  private leaveOnline() {
+    if (this.remote) leaveRoom(this.remote);
+    this.remote = null;
+    this.closeGame();
+    this.openLanding();
+  }
+
+  /** Whether the crew member in turn is played from this browser. */
+  private myTurn() {
+    return !!this.world && this.state.status === 'playing' && this.session.controls(activePlayer(this.state).id);
+  }
+
+  private enqueue(played: PlayedAction) {
+    this.queue.push(played);
+    void this.pump();
+  }
+
+  /** Animates the queued actions one after another. */
+  private async pump() {
+    if (this.pumping) return;
+    const gen = this.gameGen;
+    this.pumping = true;
+    while (this.queue.length) {
+      // Wait for whatever is on screen (a walk, the first round summary) to finish.
+      while (this.busy) await new Promise((r) => setTimeout(r, 100));
+      if (gen !== this.gameGen) return;
+      await this.playResult(this.queue.shift()!);
+      if (gen !== this.gameGen) return;
+    }
+    this.pumping = false;
+    this.hud.render(this.state, false);
+    if (this.session.botAction) void this.runBots();
+  }
+
+  /** While the turn belongs to a computer-controlled crew member, let it play (local games). */
   private async runBots() {
     if (this.botRunning) return;
+    const gen = this.gameGen;
     this.botRunning = true;
     this.hud.render(this.state, true);
     try {
       while (this.world && this.state.status === 'playing' && activePlayer(this.state).bot) {
         await this.tweens.wait(BOT_PAUSE_MS);
+        if (gen !== this.gameGen) return;
         if (!this.world || this.state.status !== 'playing' || !activePlayer(this.state).bot) break;
         // Hold on while something else is playing or a window is open.
-        if (this.busy || isModalOpen()) continue;
+        if (this.busy || this.pumping || isModalOpen()) continue;
         await this.dispatch(this.session.botAction!(), true);
       }
     } finally {
-      this.botRunning = false;
+      if (gen === this.gameGen) this.botRunning = false;
     }
     if (this.world && this.state.status === 'playing') this.hud.render(this.state, false);
   }
@@ -214,12 +329,9 @@ export class App {
 
   private async openMenu() {
     if (this.busy || !this.world) return;
-    if ((await showGameMenu()) !== 'abandon') return;
-    this.tweens.clear();
-    this.world = null;
-    this.crew.clear();
-    this.scene = new THREE.Scene();
-    this.hud.hide();
+    if ((await showGameMenu(!!this.remote)) !== 'abandon') return;
+    if (this.remote) return this.leaveOnline();
+    this.closeGame();
     this.openSetup();
   }
 
@@ -264,18 +376,19 @@ export class App {
     this.world.precompile(this.renderer, this.scene, this.camera);
   }
 
-  /** Sends an action to the engine and plays its consequences. */
-  private async dispatch(action: Action, byBot = false) {
-    if (this.busy || !this.world || this.state.status !== 'playing') return;
-    // Humans can't act during the computer's turn.
-    if (!byBot && activePlayer(this.state).bot) return;
+  /** Sends an action; its consequences come back through the session and are animated by `pump`. */
+  private async dispatch(action: Action, force = false) {
+    if (this.busy || this.pumping || !this.world || this.state.status !== 'playing') return;
+    // Only the crew member this browser plays (`force`: the local computer's own moves).
+    if (!force && !this.session.controls(activePlayer(this.state).id)) return;
     this.hud.hideMenu();
-    const { state, events } = await this.session.submit(action);
+    const { events } = await this.session.submit(action);
     const rejected = events.find((e) => e.type === 'ActionRejected');
-    if (rejected && rejected.type === 'ActionRejected') {
-      this.hud.toast(rejected.reason, { kind: 'error' });
-      return;
-    }
+    if (rejected?.type === 'ActionRejected') this.hud.toast(rejected.reason, { kind: 'error' });
+  }
+
+  /** Animates one accepted action, then whatever it leads to (guides, end of round, end of game). */
+  private async playResult({ action, state, events }: PlayedAction) {
     const before = this.state;
     this.state = state;
     this.phaseNow = 'crew';
@@ -293,13 +406,14 @@ export class App {
     await this.showGuides(events);
     const escapedByPod = events.some((e) => e.type === 'PlayerEscaped' && e.how === 'pod');
     this.busy = false;
-    if (escapedByPod && this.state.status === 'playing') {
+    // Whoever launched the pod (or the host, for the computer) decides whether to go on.
+    if (escapedByPod && this.state.status === 'playing' && this.session.answersFor(action.playerId)) {
       const choice = await choosePodOutcome(
         this.state.players.filter((p) => p.escaped),
         this.state.players.filter((p) => !p.escaped && p.condition !== 'dead'),
       );
       if (choice === 'end') {
-        await this.dispatch({ type: 'END_GAME', playerId: activePlayer(this.state).id }, true);
+        await this.session.submit({ type: 'END_GAME', playerId: activePlayer(this.state).id });
         return;
       }
     }
@@ -308,27 +422,39 @@ export class App {
     this.busy = false;
     if (state.status !== 'playing') {
       await this.tweens.wait(900);
-      const score = scoreGame(state);
-      const record = newRecord(this.session.setup, this.session.actions, state, score.total);
-      const { rank, records } = saveRecord(record);
-      this.hud.showEnd(
-        state,
-        score,
-        rank,
-        () => void showRecords(records, record.id),
-        () => this.start(this.setup!),
-        () => {
-          this.hud.hide();
-          this.openSetup();
-        },
-      );
+      this.showEnd(state);
+    }
+  }
+
+  private showEnd(state: GameState) {
+    const score = scoreGame(state);
+    const record = newRecord(this.session.setup, this.session.actions, state, score.total);
+    const { rank, records } = saveRecord(record);
+    const onRecords = () => void showRecords(records, record.id);
+    const remote = this.remote;
+    if (remote) {
+      this.hud.showEnd(state, score, rank, onRecords, remote.isHost ? () => remote.send({ type: 'rematch' }) : null, () => this.leaveOnline(), {
+        replay: 'Otra partida',
+        setup: 'Salir de la sala',
+        note: remote.isHost ? '' : 'Quien ha creado la sala puede empezar otra partida.',
+      });
       return;
     }
-    if (!byBot) void this.runBots();
+    this.hud.showEnd(
+      state,
+      score,
+      rank,
+      onRecords,
+      () => this.start(this.setup!),
+      () => {
+        this.hud.hide();
+        this.openSetup();
+      },
+    );
   }
 
   private async launchPod() {
-    if (this.busy) return;
+    if (this.busy || this.pumping || !this.myTurn()) return;
     const passengers = await this.hud.choosePassengers(this.state);
     if (passengers) await this.dispatch({ type: 'LAUNCH_POD', playerId: activePlayer(this.state).id, passengers });
   }
@@ -708,7 +834,7 @@ export class App {
   }
 
   private onPointerDown(e: PointerEvent) {
-    if (!this.world || this.busy || this.botRunning || this.state.status !== 'playing' || e.button !== 0) return;
+    if (!this.world || this.busy || this.botRunning || this.pumping || !this.myTurn() || e.button !== 0) return;
     const hit = this.pick(e);
     this.hud.hideMenu();
     if (!hit) return;

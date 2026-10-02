@@ -53,7 +53,7 @@ El grupo de amigos quiere un juego cooperativo online, con la sensación de jueg
 - Niveles de dificultad (perfiles de configuración).
 
 ### Won't (en el MVP)
-- Multijugador online (fase 2).
+- Multijugador online (fase 2; ya disponible con salas por código, ver `openspec/specs/online-rooms/spec.md`).
 - Integración como Discord Activity.
 - Cuentas de usuario, rankings online, guardado de partidas a medias (los récords locales sí están).
 - Chat de texto o voz dentro del juego.
@@ -71,7 +71,10 @@ El anfitrión abre el juego en el navegador, indica cuántos jugadores hay (2–
 ### 3. Tomar una decisión de sacrificio
 El oxígeno está al 20%. La cápsula está reparada y solo cabe una persona, y quedan 4 vivos. El equipo, hablando por Discord, decide quién se salva y quién se queda. El que se queda puede seguir jugando para ayudar hasta el final o dejar que el oxígeno dure más para los demás.
 
-### 4. Fin de partida
+### 4. Partida online
+Ana pulsa Jugar → "Crear sala online", escribe su nombre y recibe el código `K7QFM`, que pega en Discord. Luis abre el enlace, escribe su nombre y aparece en la sala de espera. Cada uno elige personaje; Ana completa con el buzo de la máquina, elige la dificultad y empieza. Cada uno juega su tripulante desde su casa y ve en directo lo que hacen los demás. Si a Luis se le cae la conexión en su turno, Ana puede dejar que juegue la máquina hasta que vuelva. Al terminar, "Otra partida" los devuelve a la misma sala.
+
+### 5. Fin de partida
 Cuando un tripulante escapa (cápsula lanzada o submarino emergido) se muestra la pantalla de victoria con los supervivientes. Si el oxígeno llega a 0 o mueren todos, derrota. Se puede empezar una nueva partida con otro mapa.
 
 ## Reglas del juego (MVP)

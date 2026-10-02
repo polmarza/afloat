@@ -2,7 +2,7 @@
 
 ## Proyecto
 
-Juego cooperativo por turnos para navegador (PC), de 2 a 5 jugadores, en un submarino averiado que se genera aleatoriamente y está a oscuras. Cada jugador controla un tripulante con un rol; el equipo gana si al menos uno sale a flote antes de que se acabe el oxígeno común. Proyecto personal, sin monetización. MVP 100% local (todos en el mismo PC, pasándose el turno); el multijugador online llega en la fase 2.
+Juego cooperativo por turnos para navegador (PC), de 2 a 5 jugadores, en un submarino averiado que se genera aleatoriamente y está a oscuras. Cada jugador controla un tripulante con un rol; el equipo gana si al menos uno sale a flote antes de que se acabe el oxígeno común. Proyecto personal, sin monetización. Se juega en un mismo PC pasándose el turno o online, cada uno desde su casa, en salas privadas con código (fase 2; falta el ranking online).
 
 El usuario no programa: Claude escribe todo el código y consulta al usuario las decisiones de diseño y de juego. Explica los cambios en lenguaje sencillo.
 
@@ -17,9 +17,10 @@ El usuario no programa: Claude escribe todo el código y consulta al usuario las
 ## Stack
 
 - TypeScript (strict), three.js, Vite, Vitest, npm.
-- Monorepo npm (workspaces): `packages/shared` (motor, contenido, balance, IA) y `packages/client` (three.js + HUD). El servidor (fase 2) irá en `packages/server`.
-- `npm run dev` → servidor local en `http://localhost:5173`.
-- `npm test` → tests del motor y de la IA (`packages/shared`).
+- Monorepo npm (workspaces): `packages/shared` (motor, contenido, balance, IA, protocolo de red), `packages/client` (three.js + HUD) y `packages/server` (Cloudflare Worker + Durable Object por sala).
+- `npm run dev` → web en `http://localhost:5173` y servidor de salas (`wrangler dev`, puerto 8787) a la vez.
+- `npm test` → tests del motor, de la IA y de la lógica de las salas.
+- `npm run deploy` → compila y publica la web y el servidor en Cloudflare.
 - `npm run typecheck` / `npm run build` → comprobar tipos de todos los paquetes / compilar el cliente.
 
 ## Estructura
@@ -31,7 +32,9 @@ El usuario no programa: Claude escribe todo el código y consulta al usuario las
 - `packages/shared/src/content/` — datos: roles, objetos, eventos, salas.
 - `packages/client/src/game/ui/` — HUD en HTML (preparación, paneles, acciones, diálogos).
 - `packages/shared/tests/` — tests de reglas, del generador, de la puntuación y de la IA.
-- `packages/client/src/game/session.ts` — `Session`: el cliente no llama al motor directamente, envía acciones a una sesión (local hoy, remota en la fase 2).
+- `packages/client/src/game/session.ts` — `Session`: el cliente no llama al motor directamente, envía acciones a una sesión (`LocalSession` o `RemoteSession` en `online/`) y anima en cola todo lo que llega por `onResult`.
+- `packages/shared/src/net/protocol.ts` — mensajes entre navegador y servidor.
+- `packages/server/src/room.ts` — lógica pura de una sala online (tests en `packages/server/tests/`); `index.ts` es el Worker y el Durable Object.
 
 ## Convenciones de código
 
@@ -53,7 +56,8 @@ El usuario no programa: Claude escribe todo el código y consulta al usuario las
 - No usar `Math.random()` en el motor.
 - No escribir números de reglas (dificultades, oxígeno, vidas…) fuera de `packages/shared/src/config/balance.ts`.
 - No meter lógica de reglas en el render, los objetos 3D o el HUD.
-- No añadir red, servidor, cuentas ni base de datos antes de la fase 2.
+- No añadir cuentas ni base de datos sin pedirlo (el ranking online con D1 es el siguiente paso de la fase 2).
+- No meter reglas del juego en el servidor: ejecuta el mismo `applyAction` que el cliente; solo decide quién puede enviar qué.
 - No añadir assets de terceros sin preguntar (decisión del proyecto: todo el arte es propio). Si se añade alguno, registrarlo en `docs/credits.md`.
 - No inventar reglas nuevas: si la spec no cubre un caso, pregunta al usuario y actualiza la spec.
 - No añadir funcionalidades de fases posteriores del roadmap sin pedirlo.

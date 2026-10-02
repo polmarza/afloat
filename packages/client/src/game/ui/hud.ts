@@ -6,6 +6,7 @@ import { ITEMS } from '@afloat/shared/content/items';
 import { ROLES } from '@afloat/shared/content/roles';
 import { ROOM_NAMES, SYSTEM_NAMES, type SystemId } from '@afloat/shared/content/rooms';
 import { oxygenConsumption, type Action, type GameState, type Player, type Score } from '@afloat/shared/engine';
+import type { SeatView } from '@afloat/shared/net/protocol';
 import type { ItemImages, Portraits } from '../portraits';
 import { escapeHtml } from './escape';
 import { isModalOpen } from './modal';
@@ -24,19 +25,34 @@ export interface HudHandlers {
   onMenu: () => void;
 }
 
+/** Who plays whom. Local games: every human crew member from this computer. Online: more detail. */
+export interface HudSeats {
+  controls: (playerId: string) => boolean;
+  seat?: (playerId: string) => SeatView | undefined;
+  isMe?: (playerId: string) => boolean;
+  isHost?: () => boolean;
+  /** The host lets the computer play for someone who dropped. */
+  onTakeover?: (playerId: string) => void;
+}
+
 export class Hud {
   private state: GameState | null = null;
   private logOpen = false;
   /** Crew member shown expanded in the crew row (view only). Follows the turn. */
   private viewedId: string | null = null;
   private lastActiveId: string | null = null;
+  private seats: HudSeats = this.localSeats();
 
   constructor(
     private readonly handlers: HudHandlers,
     private readonly portraits: Portraits,
     private readonly itemImages: ItemImages,
   ) {
-    $('actions').onclick = (e) => this.clickOption(e, this.options);
+    $('actions').onclick = (e) => {
+      const takeover = (e.target as HTMLElement).closest<HTMLElement>('[data-takeover]');
+      if (takeover) this.seats.onTakeover?.(takeover.dataset.takeover!);
+      else this.clickOption(e, this.options);
+    };
     $('hud-top').onclick = (e) => (e.target as HTMLElement).closest('#menu-button') && this.handlers.onMenu();
     $('crew-panel').onclick = (e) => {
       const t = e.target as HTMLElement;
@@ -99,6 +115,27 @@ export class Hud {
     if (e.key === 'l' || e.key === 'L') this.handlers.onTorch(activePlayer(this.state).id);
   }
 
+  private localSeats(): HudSeats {
+    return { controls: (id) => !this.state?.players.find((p) => p.id === id)?.bot };
+  }
+
+  /** Online: who is who in the room. `null`: a local game. */
+  setSeats(seats: HudSeats | null) {
+    this.seats = seats ?? this.localSeats();
+  }
+
+  /** Tags for the room status of a crew member (online only). `compact`: just the most important one. */
+  private seatTags(p: Player, compact = false) {
+    const seat = this.seats.seat?.(p.id);
+    if (!seat || seat.bot) return '';
+    const tags = [
+      !seat.connected ? `<span class="tag bad">${compact ? 'Fuera' : 'Desconectado'}</span>` : '',
+      seat.takenOver ? '<span class="tag bot-tag">Máquina</span>' : '',
+      this.seats.isMe?.(p.id) ? '<span class="tag turn-tag">Tú</span>' : '',
+    ].filter(Boolean);
+    return compact ? (tags[0] ?? '') : tags.join('');
+  }
+
   render(s: GameState, busy: boolean) {
     this.state = s;
     for (const id of ['hud-top', 'crew-panel', 'actions', 'log']) $(id).style.display = '';
@@ -156,7 +193,7 @@ export class Hud {
         const photo = `<div class="photo"><img src="${this.portraits[p.role].face}" alt="" /></div>`;
         if (p !== viewed) {
           return `<button class="crew-card mini role-${p.role} ${out} ${turn}" data-view="${p.id}" title="${escapeHtml(p.name)} · ${ROLES[p.role].name}">
-            ${photo}<div class="mini-hearts">${hearts(p.health, p.maxHealth)}</div>${p.bot ? '<span class="tag bot-tag">IA</span>' : ''}${status}
+            ${photo}<div class="mini-hearts">${hearts(p.health, p.maxHealth)}</div>${p.bot ? '<span class="tag bot-tag">IA</span>' : ''}${this.seatTags(p, true)}${status}
           </button>`;
         }
         const items = p.inventory
@@ -165,7 +202,7 @@ export class Hud {
         return `<div class="crew-card active role-${p.role} ${out} ${turn}">
           ${photo}
           <div class="details">
-            <div class="name">${escapeHtml(p.name)} <span class="muted">${ROLES[p.role].name}</span>${p.bot ? '<span class="tag bot-tag">Máquina</span>' : ''}${turn ? '<span class="tag turn-tag">Su turno</span>' : ''}</div>
+            <div class="name">${escapeHtml(p.name)} <span class="muted">${ROLES[p.role].name}</span>${p.bot ? '<span class="tag bot-tag">Máquina</span>' : ''}${this.seatTags(p)}${turn ? '<span class="tag turn-tag">Su turno</span>' : ''}</div>
             <div>${hearts(p.health, p.maxHealth)} ${status}</div>
             <div class="where">${p.escaped ? 'A salvo' : p.condition === 'dead' ? '' : ROOM_NAMES[s.rooms[p.roomId].type]}</div>
             ${items ? `<div class="items">${items}</div>` : ''}
@@ -178,9 +215,18 @@ export class Hud {
 
   private renderActions(s: GameState, busy: boolean) {
     const active = activePlayer(s);
-    if (s.status === 'playing' && active.bot) {
+    if (s.status === 'playing' && !this.seats.controls(active.id)) {
       this.options = [];
-      $('actions').innerHTML = `<div class="actions-title">ACCIONES</div><div class="bot-turn">Juega la máquina: <b>${escapeHtml(active.name)}</b>…</div>`;
+      const name = `<b>${escapeHtml(active.name)}</b>`;
+      const seat = this.seats.seat?.(active.id);
+      let text = `Turno de ${name}…`;
+      if (active.bot) text = `Juega la máquina: ${name}…`;
+      else if (seat?.takenOver) text = `Juega la máquina por ${name}…`;
+      else if (seat && !seat.connected) {
+        const takeover = this.seats.isHost?.() ? ` <button class="special" data-takeover="${active.id}">Que juegue la máquina</button>` : '';
+        text = `${name} se ha desconectado. Esperando a que vuelva…${takeover}`;
+      }
+      $('actions').innerHTML = `<div class="actions-title">ACCIONES</div><div class="bot-turn">${text}</div>`;
       return;
     }
     this.options = s.status === 'playing' ? actionOptions(s) : [];
@@ -285,7 +331,16 @@ export class Hud {
     });
   }
 
-  showEnd(s: GameState, score: Score, rank: number | null, onRecords: () => void, onReplay: () => void, onNewSetup: () => void) {
+  /** `onReplay` null: no button (online, only the host starts another game). */
+  showEnd(
+    s: GameState,
+    score: Score,
+    rank: number | null,
+    onRecords: () => void,
+    onReplay: (() => void) | null,
+    onNewSetup: () => void,
+    labels: { replay: string; setup: string; note: string } = { replay: 'Nueva partida', setup: 'Cambiar jugadores', note: '' },
+  ) {
     const saved = s.players.filter((p) => p.escaped);
     const lost = s.players.filter((p) => !p.escaped);
     const reason = [...s.log].reverse().find((e) => e.text.startsWith('VICTORIA') || e.text.startsWith('DERROTA'))?.text ?? '';
@@ -310,14 +365,17 @@ export class Hud {
         <div class="score-mult"><span>Dificultad ${DIFFICULTY_NAMES[s.difficulty]}</span><span>${score.base} × ${score.multiplier}</span></div>
       </div>
       <p class="muted">Semilla: ${escapeHtml(s.seed)}</p>
-      <div class="row"><button id="end-records">Récords</button><button id="end-setup">Cambiar jugadores</button><button id="end-replay" class="primary">Nueva partida</button></div>
+      ${labels.note ? `<p class="muted">${labels.note}</p>` : ''}
+      <div class="row"><button id="end-records">Récords</button><button id="end-setup">${labels.setup}</button>${onReplay ? `<button id="end-replay" class="primary">${labels.replay}</button>` : ''}</div>
     </div>`;
     dialog.style.display = 'flex';
     $('end-records').onclick = onRecords;
-    $('end-replay').onclick = () => {
-      dialog.style.display = 'none';
-      onReplay();
-    };
+    if (onReplay) {
+      $('end-replay').onclick = () => {
+        dialog.style.display = 'none';
+        onReplay();
+      };
+    }
     $('end-setup').onclick = () => {
       dialog.style.display = 'none';
       onNewSetup();

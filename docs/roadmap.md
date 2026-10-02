@@ -63,16 +63,16 @@ Objetivo: cada amigo juega desde su casa mientras hablan por Discord.
 
 - [x] Reorganización en paquetes (`shared` / `client`) y capa `Session` en el cliente, lista para añadir la sesión remota.
 - [x] Decisiones: Cloudflare Durable Objects (una sala por partida), anfitrión que crea la partida y comparte enlace, nombre + código de sala (Clerk después), récords en D1.
-- [ ] `packages/server`: Cloudflare Worker + Durable Object por sala que ejecuta el motor (incluidas las máquinas, que juegan en el servidor).
-- [ ] Salas por enlace o código con anfitrión (crea la partida, comparte el enlace, elige dificultad y máquinas, empieza); reconexión si alguien se cae; si el anfitrión se va, pasa a otro jugador.
-- [ ] `RemoteSession` en el cliente: WebSocket, botones bloqueados fuera de tu turno, identificador secreto por navegador + nombre editable.
+- [x] `packages/server`: Cloudflare Worker + Durable Object por sala que ejecuta el motor (incluidas las máquinas, que juegan en el servidor).
+- [x] Salas por enlace o código con anfitrión (crea la partida, comparte el enlace, elige dificultad y máquinas, empieza); reconexión si alguien se cae; si el anfitrión se va, pasa a otro jugador.
+- [x] `RemoteSession` en el cliente: WebSocket, botones bloqueados fuera de tu turno, identificador secreto por navegador + nombre editable.
 - [ ] Ranking online en D1, calculado por el servidor al terminar la partida (no se acepta ninguna puntuación enviada por el navegador). Reglas decididas:
   - La puntuación es **compartida**: cada jugador humano recibe la puntuación de la partida, sin bonus ni penalización personal (quien se sacrifica no sale perjudicado).
   - Puntúan solo las partidas con **todos los asientos humanos** y terminadas (no las abandonadas).
   - Dos clasificaciones por jugador: **total acumulado** y **mejor partida**.
   - La cápsula salva siempre a 1 persona (ya implementado), para que la puntuación no dependa del número de jugadores.
-- [ ] Cada jugador solo controla su personaje; los demás ven la acción en directo.
-- [ ] Despliegue del cliente y del servidor. (Cliente MVP ya publicado en Cloudflare, ver `docs/architecture.md`.)
+- [x] Cada jugador solo controla su personaje; los demás ven la acción en directo. Si alguien se desconecta en su turno, el anfitrión puede dejar que juegue la máquina hasta que vuelva.
+- [x] Despliegue del cliente y del servidor: un solo Worker en Cloudflare (`npm run deploy`).
 
 **Hito**: partida completa con 3+ amigos, cada uno en su casa.
 
@@ -86,4 +86,4 @@ Objetivo: cada amigo juega desde su casa mientras hablan por Discord.
 - [ ] Arte final pulido y música.
 - [ ] Jugar dentro de Discord (Activities).
 - [x] Nombre definitivo: **AFLOAT**.
-- [x] Pantalla de título: portada con el submarino 3D de fondo y secciones de cómo se juega, tripulación, objetos, salas y eventos (adelantada a la fase 2).
+- [x] Pantalla de título: portada con los camarotes en 3D y sliders animados de cómo se juega y de las salas, más tripulación, tripulación, objetos, salas y eventos (adelantada a la fase 2).

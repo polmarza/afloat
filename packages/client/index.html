@@ -159,6 +159,33 @@
       .crew-strip { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
       .strip-card { display: grid; justify-items: center; gap: 2px; width: 140px; padding: 10px 6px; background: #11151a; border: 1px solid var(--line); border-top: 4px solid var(--line); text-align: center; line-height: 1.15; }
       .strip-card img { width: 100px; height: 100px; background: radial-gradient(circle at 50% 38%, #34404a, #0b0e10 75%); margin-bottom: 4px; }
+      /* Play menu and online waiting room */
+      .play-menu .mode { display: grid; gap: 2px; width: 100%; text-align: left; padding: 14px 18px; margin-bottom: 10px; background: #11151a; }
+      .play-menu .mode b { font-size: 24px; }
+      .play-menu .mode span { color: var(--muted); }
+      .code-input { font-size: 30px !important; letter-spacing: .3em; text-transform: uppercase; }
+      .setup.lobby { width: min(920px, 94vw); max-height: 92vh; overflow-y: auto; }
+      .setup.lobby h3 { margin: 18px 0 8px; font-size: 22px; }
+      .lobby-head { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+      .lobby-code { font-size: 48px; font-weight: 700; letter-spacing: .3em; color: var(--amber); line-height: 1.1; }
+      .lobby-seats { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
+      .lobby-seat { position: relative; display: flex; gap: 10px; align-items: center; background: #11151a; border: 1px solid var(--line); border-left: 4px solid var(--line); padding: 8px; }
+      .lobby-seat img, .lobby-empty { width: 52px; height: 52px; flex: none; background: radial-gradient(circle at 50% 38%, #34404a, #0b0e10 75%); display: grid; place-items: center; color: var(--muted); font-size: 24px; }
+      .lobby-seat.role-engineer, .lobby-role.role-engineer { border-left-color: #e8a33a; }
+      .lobby-seat.role-medic, .lobby-role.role-medic { border-left-color: #e9e9e9; }
+      .lobby-seat.role-soldier, .lobby-role.role-soldier { border-left-color: #6f9440; }
+      .lobby-seat.role-hacker, .lobby-role.role-hacker { border-left-color: #4aa3e0; }
+      .lobby-seat.role-diver, .lobby-role.role-diver { border-left-color: #1fb5a5; }
+      .lobby-remove { position: absolute; top: 4px; right: 4px; padding: 0 8px; }
+      .lobby-roles { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+      .lobby-role { display: grid; justify-items: center; gap: 2px; padding: 8px; border-left: 4px solid var(--line); line-height: 1.15; }
+      .lobby-role img { width: 64px; height: 64px; background: radial-gradient(circle at 50% 38%, #34404a, #0b0e10 75%); }
+      .lobby-role.selected { border-color: var(--amber); box-shadow: 0 0 0 1px var(--amber); }
+      .lobby-bots { display: flex; flex-wrap: wrap; gap: 8px; }
+      .lobby-name { max-width: 360px; }
+      .lobby-status { flex: 1; text-align: center; }
+      .levels .level:disabled { opacity: .7; }
+      .bot-turn button { margin-left: 10px; }
       #menu-button { margin-left: 8px; pointer-events: auto; font-size: 15px; padding: 4px 12px; }
 
       /* Modals: character sheet, item sheet, item found, turn popup */

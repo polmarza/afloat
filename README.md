@@ -11,7 +11,8 @@ Una alarma os despierta dentro de un submarino que se hunde. Las salas están a 
 
 ## Cómo se juega
 
-- **Tripulación de 2 a 5**, cada plaza humana o de la máquina. Por ahora se juega en un solo PC pasándose el turno; las salas online con código de invitación son lo siguiente.
+- **Tripulación de 2 a 5**, cada plaza humana o de la máquina.
+- **Online o en un mismo ordenador:** crea una sala, pasa el código o el enlace por Discord y cada uno juega desde su casa. También se puede jugar en un solo PC pasándose el turno, o solo contra la máquina.
 - **5 roles** con habilidades propias: ingeniero, sanitario, militar, informático y buzo.
 - **Submarino aleatorio** en cada partida, siempre con salida alcanzable. Se puede repetir un mapa con su semilla.
 - **Niebla de guerra:** solo está iluminada la sala inicial. Las demás se descubren al abrir su puerta.
@@ -32,7 +33,7 @@ Una alarma os despierta dentro de un submarino que se hunde. Las salas están a 
 
 ## Estado
 
-El MVP local ya es jugable de principio a fin, con una portada que explica el juego, la tripulación, los objetos, las salas y los eventos. El multijugador online está planificado. Consulta el [roadmap](docs/roadmap.md).
+Jugable de principio a fin en local y online (salas privadas con código), con una portada que explica el juego, la tripulación, los objetos, las salas y los eventos. Lo siguiente es el ranking online. Consulta el [roadmap](docs/roadmap.md).
 
 ## Desarrollo
 
@@ -40,11 +41,11 @@ Requiere Node.js y npm.
 
 ```bash
 npm install
-npm run dev        # servidor local en http://localhost:5173
-npm test           # tests del motor y de la IA
+npm run dev        # web en http://localhost:5173 + servidor de salas online
+npm test           # tests del motor, de la IA y de las salas
 npm run typecheck  # comprobar tipos de todos los paquetes
 npm run build      # compilar el cliente
-npm run deploy     # compilar y publicar en Cloudflare (requiere wrangler login)
+npm run deploy     # compilar y publicar la web y las salas en Cloudflare (requiere wrangler login)
 ```
 
 ## Cómo está hecho
@@ -52,8 +53,9 @@ npm run deploy     # compilar y publicar en Cloudflare (requiere wrangler login)
 - **TypeScript** estricto, **three.js**, **Vite** y **Vitest**, en un monorepo de npm.
 - `packages/shared`: motor de reglas puro (`applyAction(state, action) → { state, events }`), contenido, balance e IA. No depende del navegador y toda la aleatoriedad pasa por un RNG con semilla.
 - `packages/client`: cliente three.js y HUD. Lee el estado y reproduce los sucesos, nunca decide reglas.
+- `packages/server`: un Cloudflare Worker con un Durable Object por sala online, que ejecuta el mismo motor y juega las máquinas.
 - **Arte 100 % generado por código** (geometría low-poly y texturas en canvas), sin assets de terceros. Estilo industrial oscuro.
-- Alojado en Cloudflare (Workers con assets estáticos).
+- Alojado en Cloudflare: un solo Worker sirve la página y las salas (Durable Objects con SQLite, plan gratuito).
 
 ## Documentación
 
@@ -65,7 +67,7 @@ npm run deploy     # compilar y publicar en Cloudflare (requiere wrangler login)
 | [docs/design-system.md](docs/design-system.md) | Estilo visual |
 | [docs/roadmap.md](docs/roadmap.md) | Fases y estado |
 | [docs/credits.md](docs/credits.md) | Créditos y licencias |
-| [openspec/specs](openspec/specs) | Especificación de cada dominio de reglas |
+| [openspec/specs](openspec/specs) | Especificación de cada dominio (reglas, portada, salas online) |
 
 ## Licencia
 

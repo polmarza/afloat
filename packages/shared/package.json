@@ -3,13 +3,14 @@
   "private": true,
   "version": "0.0.1",
   "type": "module",
-  "description": "Rules engine, game content, balance and bot AI. Pure TypeScript: no DOM, no three.js. Used by the client and (later) the server.",
+  "description": "Rules engine, game content, balance and bot AI. Pure TypeScript: no DOM, no three.js. Used by the client and the server.",
   "exports": {
     "./engine": "./src/engine/index.ts",
     "./engine/*": "./src/engine/*.ts",
     "./content/*": "./src/content/*.ts",
     "./config/*": "./src/config/*.ts",
-    "./ai/*": "./src/ai/*.ts"
+    "./ai/*": "./src/ai/*.ts",
+    "./net/*": "./src/net/*.ts"
   },
   "scripts": {
     "test": "vitest run",

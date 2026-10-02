@@ -19,7 +19,7 @@ export interface NewGame {
 
 export function createGame(config: NewGame): ActionResult {
   const n = config.players.length;
-  if (n < 2 || n > 5) throw new Error('Se necesitan entre 2 y 5 jugadores.');
+  if (n < BALANCE.crew.min || n > BALANCE.crew.max) throw new Error(`Se necesitan entre ${BALANCE.crew.min} y ${BALANCE.crew.max} jugadores.`);
   if (new Set(config.players.map((p) => p.role)).size !== n) throw new Error('Cada jugador debe tener un rol distinto.');
 
   const difficulty = config.difficulty ?? 'normal';

@@ -12,7 +12,7 @@ Qué hace el juego está en `docs/prd.md`; aquí solo se describe **cómo** se c
 | Tests | Vitest | Rápido, integrado con Vite; se usa sobre el motor de reglas |
 | Gestor de paquetes | npm (workspaces) | Por defecto con Node; un paquete `shared` con el motor y otro `client`, y luego `server` |
 
-**Fase 2 (online)**: servidor autoritativo que ejecuta el mismo motor de reglas dentro de un Cloudflare Durable Object por sala (WebSocket); cuentas con nombre y código de sala al principio (Clerk más adelante); récords en Cloudflare D1. El cliente ya habla con una `Session` (hoy `LocalSession`), y online será una `RemoteSession`. No se implementa nada de red todavía.
+**Fase 2 (online)**: servidor autoritativo que ejecuta el mismo motor de reglas dentro de un Cloudflare Durable Object por sala (WebSocket). Sin cuentas: nombre y código de sala (Clerk más adelante). El cliente habla con una `Session`: `LocalSession` (en este ordenador) o `RemoteSession` (online). **Hecho**: salas privadas con código. **Pendiente**: ranking online en Cloudflare D1.
 
 ## Principio central: motor de reglas puro
 
@@ -68,7 +68,7 @@ survemarine/                   (carpeta del proyecto; el juego se llama AFLOAT)
 ├── CLAUDE.md
 ├── docs/                      Especificación (este documento y hermanos)
 ├── openspec/                  Specs funcionales (OpenSpec)
-├── package.json               Raíz: define los paquetes y los comandos (dev, build, test)
+├── package.json               Raíz: define los paquetes y los comandos (dev, build, test, deploy)
 ├── tsconfig.base.json         Opciones de TypeScript comunes
 └── packages/
     ├── shared/                @afloat/shared — TypeScript puro, SIN DOM ni three.js
@@ -77,6 +77,7 @@ survemarine/                   (carpeta del proyecto; el juego se llama AFLOAT)
     │   │   ├── config/balance.ts   TODOS los números de equilibrio (+ tamaño de módulo ROOM_W×ROOM_D)
     │   │   ├── content/            Datos: roles, personajes, objetos, eventos, salas, dificultad
     │   │   ├── ai/bot.ts           IA clásica de los tripulantes de la máquina
+    │   │   ├── net/protocol.ts     Mensajes entre navegador y servidor de salas, y la sala vista por ambos
     │   │   └── engine/             Motor de reglas puro (sin Math.random)
     │   │       ├── index.ts        API pública: createGame, applyAction, replay, scoreGame, successChance…
     │   │       ├── types.ts        GameState, Action, GameEvent…
@@ -97,7 +98,8 @@ survemarine/                   (carpeta del proyecto; el juego se llama AFLOAT)
             ├── main.ts        Arranque
             └── game/
                 ├── App.ts         Controlador: envía acciones a la sesión, anima los sucesos, cámara, entrada
-                ├── session.ts     Session: dónde vive el estado. LocalSession hoy; RemoteSession (WebSocket) en la fase 2
+                ├── session.ts     Session: dónde vive el estado y por dónde llegan las acciones aceptadas. LocalSession (este ordenador)
+                ├── online/        remoteSession.ts (RemoteSession: WebSocket, reconexión), identity.ts (clave y nombre del navegador)
                 ├── world.ts       Vista 3D del barco a partir del GameState (salas, puertas, agua, fuego, luz)
                 ├── roomProps.ts   Mobiliario por tipo de sala (sin bloquear puertas)
                 ├── props.ts       Mobiliario low-poly generado por código
@@ -107,11 +109,25 @@ survemarine/                   (carpeta del proyecto; el juego se llama AFLOAT)
                 ├── tweens.ts      Animaciones
                 ├── records.ts     Tabla de récords en localStorage (con acciones para poder reproducirlas)
                 ├── vignette.ts    Escenas 3D pequeñas de la portada (salas reales animadas por un guion)
-                └── ui/            landing.ts y landingScenes.ts (portada), setup.ts (preparación), hud.ts (paneles, avisos, pantalla final),
+                └── ui/            landing.ts y landingScenes.ts (portada), online.ts (modo de juego, crear/unirse, sala de espera), setup.ts (preparación), hud.ts (paneles, avisos, pantalla final),
                                    options.ts (acciones disponibles), sheet.ts (fichas, resumen, menú, récords), modal.ts
 ```
 
-Más adelante se añadirá `packages/server/` (Cloudflare Workers + Durable Objects) que importará `@afloat/shared`.
+    └── server/                @afloat/server — Cloudflare Worker: sirve la página y las salas online
+        ├── wrangler.jsonc     Worker "afloat": assets del cliente + Durable Object RoomObject (SQLite)
+        ├── src/
+        │   ├── index.ts       Rutas (/api/rooms, /api/rooms/:code/ws, resto → página) y RoomObject (sockets con hibernación, almacenamiento, alarmas)
+        │   ├── room.ts        Room: lógica pura de la sala (asientos, anfitrión, personajes, partida, máquinas, desconexiones)
+        │   └── config.ts      Tiempos del servidor (ritmo de las máquinas, caducidad de salas vacías)
+        └── tests/             room.test.ts
+
+## Partidas online
+
+- El servidor es el único que ejecuta `applyAction` en una partida online. El navegador envía acciones y recibe cada acción aceptada (de cualquiera) con sus sucesos y el estado nuevo, numeradas; si falta una, pide el estado completo.
+- `App` anima todo lo que llega por `Session.onResult` en una cola, igual en local que online. `Session.controls(id)` dice qué tripulantes maneja este navegador; fuera de tu turno la entrada está bloqueada.
+- Las máquinas las juega el servidor, con una pausa que depende de cuántos sucesos tenga que animar el cliente.
+- El servidor envía el estado completo, incluido lo oculto: aceptado mientras no haya ranking online.
+- Coste: Durable Objects con SQLite en el plan gratuito de Workers; si se superan los límites diarios, las operaciones fallan en vez de cobrarse.
 
 Los imports del cliente al motor usan subrutas: `@afloat/shared/engine`, `@afloat/shared/content/items`, `@afloat/shared/config/balance`, `@afloat/shared/ai/bot`.
 
@@ -155,17 +171,17 @@ Una acción inválida devuelve el mismo estado y un suceso `ActionRejected` con 
 - **MVP**: ninguna. Todo funciona sin conexión tras cargar la página.
 - **Fuentes**: Barlow Condensed (Google Fonts) para el HUD del prototipo.
 - **Assets**: ninguno de terceros; todo el arte se genera por código.
-- **Fase 2**: servicio de sincronización en tiempo real (a decidir).
+- **Fase 2**: Cloudflare Durable Objects (una sala por partida, WebSocket).
 - **Fase 3**: Discord Embedded App SDK (Activities), opcional.
 
 ## Autenticación
 
 - **MVP**: ninguna. Los jugadores escriben su nombre al preparar la partida.
-- **Fase 2**: sin cuentas; salas identificadas por un enlace o código, con el nombre como identidad.
+- **Fase 2**: sin cuentas; salas identificadas por un código o enlace (`?sala=CÓDIGO`), con el nombre como identidad y una clave secreta por navegador (`localStorage`) para recuperar tu asiento al reconectar.
 
 ## Despliegue
 
-- **MVP**: local. `npm run dev` y abrir `http://localhost:5173`.
-- **Publicado en Cloudflare** (Workers con assets estáticos): https://afloat.polmarza.workers.dev. Se actualiza con `npm run deploy` (compila y sube; usa `packages/client/wrangler.jsonc` y la sesión de `wrangler login`). Dominio propio pendiente.
+- **Desarrollo**: `npm run dev` arranca Vite (`http://localhost:5173`) y el Worker con `wrangler dev` (puerto 8787) a la vez; Vite reenvía `/api` (también el WebSocket) al Worker. `npm run dev:web` arranca solo la web.
+- **Publicado en Cloudflare**: https://afloat.polmarza.workers.dev. Un solo Worker (`afloat`) sirve la página y las salas online. Se actualiza con `npm run deploy` (compila el cliente y despliega `packages/server/wrangler.jsonc`; usa la sesión de `wrangler login`). Dominio propio pendiente.
 - **Build estático**: `npm run build` genera `dist/`, publicable en cualquier hosting estático si se quiere compartir la versión local.
-- **Fase 2**: cliente en hosting estático y servidor de partidas en un servicio que admita conexiones persistentes (WebSockets). Vercel por sí solo no sirve para esto.
+- **Fase 2**: hecho con el mismo Worker (página + salas).

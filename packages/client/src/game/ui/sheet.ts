@@ -116,12 +116,13 @@ export async function showRecords(records: GameRecord[], highlight?: string) {
 }
 
 /** In-game menu. Resolves 'abandon' only after a confirmation. */
-export async function showGameMenu(): Promise<'resume' | 'abandon'> {
+/** `online`: leaving means leaving the room (the game goes on for the others). */
+export async function showGameMenu(online = false): Promise<'resume' | 'abandon'> {
   const { button } = await openModal(
     `<div class="guide">
       <div class="sheet-kicker">MENÚ</div>
       <h2>Partida en curso</h2>
-      <div class="row"><button data-close data-choice="abandon">Abandonar partida</button><button data-close data-choice="records">Récords</button><button class="primary" data-close data-primary>Seguir jugando</button></div>
+      <div class="row"><button data-close data-choice="abandon">${online ? 'Salir de la sala' : 'Abandonar partida'}</button><button data-close data-choice="records">Récords</button><button class="primary" data-close data-primary>Seguir jugando</button></div>
     </div>`,
     'small',
   );
@@ -132,10 +133,10 @@ export async function showGameMenu(): Promise<'resume' | 'abandon'> {
   if (button?.dataset.choice !== 'abandon') return 'resume';
   const confirm = await openModal(
     `<div class="guide">
-      <div class="sheet-kicker">ABANDONAR</div>
+      <div class="sheet-kicker">${online ? 'SALIR' : 'ABANDONAR'}</div>
       <h2>¿Seguro?</h2>
-      <p>La partida se perderá y volveréis a la pantalla inicial.</p>
-      <div class="row"><button class="primary" data-close data-primary>No, seguir jugando</button><button data-close data-choice="abandon">Sí, abandonar</button></div>
+      <p>${online ? 'La partida sigue para los demás. Si vuelves a abrir el enlace de la sala, recuperas tu tripulante.' : 'La partida se perderá y volveréis a la pantalla inicial.'}</p>
+      <div class="row"><button class="primary" data-close data-primary>No, seguir jugando</button><button data-close data-choice="abandon">${online ? 'Sí, salir' : 'Sí, abandonar'}</button></div>
     </div>`,
     'small',
   );

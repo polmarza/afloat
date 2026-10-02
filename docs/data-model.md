@@ -220,6 +220,15 @@ Camarotes (sala inicial), puente, sala de máquinas (energía), soporte vital, s
 
 Las 10 mejores partidas. Cada récord (`GameRecord`, versión `v: 1`) guarda `date`, `game` (semilla y jugadores con nombre, rol y si es máquina), `actions` (todas las acciones aceptadas, en orden), `difficulty`, `status`, `rounds`, `saved` y `score`. Con `game` y `actions`, `replay()` del motor reconstruye el estado final exacto: así un servidor futuro podrá recalcular la puntuación en vez de fiarse de la que envía el navegador.
 
+## Salas online (`packages/shared/src/net/protocol.ts`, `packages/server/src/room.ts`)
+
+- **Código**: 5 caracteres de `ABCDEFGHJKMNPQRSTUVWXYZ23456789`. El Durable Object de la sala se obtiene con `getByName(código)`.
+- **`RoomData`** (guardado en el Durable Object tras cada cambio, JSON): `code`, `phase` (`lobby` | `playing` | `ended`), `difficulty`, `hostKey`, `seats` (en orden de juego: `key` del navegador o `null` si es máquina, `name`, `role`, `connected`, `takenOver`), `game` (`setup`, `state`, `startEvents`, `actions`, `searchedEmpty` de la IA) y `conns` (conexión → clave).
+- **`RoomView`**: lo que ven los navegadores: los asientos sin las claves (`bot`, `host`, `connected`, `takenOver`).
+- **Mensajes**: ver `ClientMessage` y `ServerMessage`. Cada acción aceptada lleva `seq` (1, 2, 3…).
+- **Navegador**: `afloat.playerKey` (clave secreta) y `afloat.playerName` (último nombre) en `localStorage`.
+
 ## Políticas de acceso
 
-No aplica en el MVP (local, sin usuarios). En la fase 2, el servidor será el único que ejecute `applyAction`; los clientes solo envían acciones y reciben el estado.
+- Local: sin usuarios.
+- Online: el servidor es el único que ejecuta `applyAction`. Solo acepta acciones de quien tiene el turno (con su `playerId`); el anfitrión puede además pasar a la máquina a un jugador desconectado, empezar la partida y terminarla tras una huida en nombre de la máquina. El nombre se limita a 20 caracteres y los mensajes a 64 KB.

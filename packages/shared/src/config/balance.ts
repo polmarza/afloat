@@ -4,6 +4,8 @@
 import type { Difficulty } from '../content/difficulty';
 
 export const BALANCE = {
+  /** Crew size: players plus computer-controlled crew. */
+  crew: { min: 2, max: 5 },
   actionsPerTurn: 3,
   /** The first round starts calm: no event card is drawn before this round. */
   firstEventRound: 2,

@@ -19,6 +19,9 @@ export function randomSeed() {
   return `${SEED_WORDS[Math.floor(Math.random() * SEED_WORDS.length)]}${Math.floor(Math.random() * 1000)}`;
 }
 
+/** Every allowed crew size, smallest first. */
+const crewSizes = () => Array.from({ length: BALANCE.crew.max - BALANCE.crew.min + 1 }, (_, i) => BALANCE.crew.min + i);
+
 type Step = 'count' | 'pick' | 'name' | 'summary';
 
 /** "Jugador N" for humans; the character's first name for the computer. */
@@ -67,7 +70,7 @@ export function showSetup(
       <h1>AFLOAT</h1>
       <p class="muted">La alarma os despierta en un submarino averiado. Que al menos uno salga a flote.</p>
       <h2>¿Cuántos vais a jugar?</h2>
-      <div class="counts">${[2, 3, 4, 5].map((n) => `<button class="count ${n === count ? 'selected' : ''}" data-count="${n}">${n}</button>`).join('')}</div>
+      <div class="counts">${crewSizes().map((n) => `<button class="count ${n === count ? 'selected' : ''}" data-count="${n}">${n}</button>`).join('')}</div>
       <h2>Dificultad</h2>
       <div class="levels">${DIFFICULTY_ORDER.map((d) => `<button class="level ${d === difficulty ? 'selected' : ''}" data-level="${d}"><b>${DIFFICULTY_NAMES[d]}</b><span>${DIFFICULTY_TEXT[d]}</span><em>Puntos ×${BALANCE.score.multiplier[d]}</em></button>`).join('')}</div>
       <div class="row"><div class="row-group"><button data-home>Portada</button><button data-records>Récords</button></div><button class="primary" data-next>Elegir personajes</button></div>

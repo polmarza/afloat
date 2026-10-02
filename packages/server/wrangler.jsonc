@@ -1,0 +1,17 @@
+{
+  // One Worker for everything: the static client and the online rooms.
+  "name": "afloat",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "../client/dist",
+    "binding": "ASSETS",
+    // Only /api goes to the Worker code; every other path is served straight from the assets.
+    "run_worker_first": ["/api/*"]
+  },
+  "durable_objects": {
+    "bindings": [{ "name": "ROOMS", "class_name": "RoomObject" }]
+  },
+  // SQLite-backed Durable Objects: the only kind available on the free plan.
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["RoomObject"] }]
+}

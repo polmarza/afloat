@@ -91,6 +91,9 @@ Provisional (prototipo): **Barlow Condensed** (Google Fonts, OFL) para el HUD y 
   - Tripulación (retrato y ficha con el color del rol), Objetos (imagen, efecto en ámbar, se gasta o permanente, copias en el mazo) y Eventos (borde rojo, verde para "Calma"; daño al casco u oxígeno y copias) siguen como tarjetas.
   - Todos los textos salen del contenido (`content/`) y de `BALANCE`; las descripciones de las salas sin guía están en `ROOM_BLURBS`.
   - "Jugar" abre el asistente; su primer paso tiene un botón "Portada" para volver.
+- **Jugar** abre "¿Cómo queréis jugar?": En este ordenador (asistente), Crear sala online o Unirse con código (`ui/online.ts`). Un enlace `?sala=CÓDIGO` va directo a "Entrar en la sala", con el nombre recordado.
+- **Sala de espera (online):** código grande en ámbar con "Copiar enlace"; tarjetas de la tripulación (retrato, nombre, personaje y etiquetas Tú / Anfitrión / Máquina / Desconectado, con × para quitar máquinas); rejilla de personajes (los ocupados, apagados con el nombre de quien lo tiene); tu nombre; dificultad (solo la cambia el anfitrión); "Completar con la máquina" con los personajes libres; "Salir de la sala", estado de la conexión y "Empezar partida" (anfitrión) o "Esperando a que… empiece".
+- **HUD online:** fuera de tu turno el panel de acciones dice "Turno de Ana…"; si quien tiene el turno se ha desconectado, "se ha desconectado. Esperando a que vuelva…" y, para el anfitrión, el botón "Que juegue la máquina". Las tarjetas de la tripulación llevan Tú / Máquina / Desconectado (en miniatura, solo la más importante: Fuera, Máquina o Tú). El menú ofrece "Salir de la sala" y la pantalla final "Otra partida" (anfitrión) y "Salir de la sala".
 - **Pantalla inicial (asistente):**
   1. Número de jugadores.
   2. Para cada jugador, un carrusel con las fichas de los personajes aún libres (flechas o ← →) y "Elegir". Después, el nombre ("Jugador N" por defecto).
