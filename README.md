@@ -5,11 +5,13 @@
 🎮 **Jugar:** https://afloat.polmarza.workers.dev
 🎬 **Vídeo de una partida:** [docs/media/afloat-partida-maquinas.mp4](docs/media/afloat-partida-maquinas.mp4)
 
+![El submarino a mitad de partida, con la cápsula de escape a la derecha](docs/media/submarino.jpg)
+
 Una alarma os despierta dentro de un submarino que se hunde. Las salas están a oscuras hasta que alguien abre la puerta, el oxígeno es común y se acaba. El equipo gana si **al menos un tripulante sale a flote**, así que habrá que repartir recursos y, a veces, sacrificar a alguien.
 
 ## Cómo se juega
 
-- **Tripulación de 2 a 5**, cada plaza humana o de la máquina. Se juega en un solo PC pasándose el turno.
+- **Tripulación de 2 a 5**, cada plaza humana o de la máquina. Por ahora se juega en un solo PC pasándose el turno; las salas online con código de invitación son lo siguiente.
 - **5 roles** con habilidades propias: ingeniero, sanitario, militar, informático y buzo.
 - **Submarino aleatorio** en cada partida, siempre con salida alcanzable. Se puede repetir un mapa con su semilla.
 - **Niebla de guerra:** solo está iluminada la sala inicial. Las demás se descubren al abrir su puerta.
@@ -20,6 +22,11 @@ Una alarma os despierta dentro de un submarino que se hunde. Las salas están a 
 - **Dos salidas:** cápsula de escape (plazas limitadas) o emerger el submarino.
 - **Salas especiales:** invernadero, laboratorio y cantina.
 - **Tres dificultades** y puntuación con desglose. Los récords se guardan en el navegador.
+
+| Cinco tripulantes | Exploración | La cápsula |
+|---|---|---|
+| ![Elección de personaje](docs/media/personajes.jpg) | ![Las salas se descubren al abrir sus puertas](docs/media/exploracion.jpg) | ![Cápsula lanzada: uno de vosotros ya está a salvo](docs/media/capsula.jpg) |
+| Cada uno con su rol y su historia. | Cada puerta abierta descubre una sala nueva. | Salva a uno; el resto puede intentar emerger. |
 
 ## Estado
 
@@ -60,4 +67,4 @@ npm run deploy     # compilar y publicar en Cloudflare (requiere wrangler login)
 
 ## Licencia
 
-Sin licencia por ahora: todos los derechos reservados. Es un proyecto personal.
+[MIT](LICENSE).
