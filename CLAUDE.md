@@ -58,6 +58,11 @@ El usuario no programa: Claude escribe todo el código y consulta al usuario las
 - No inventar reglas nuevas: si la spec no cubre un caso, pregunta al usuario y actualiza la spec.
 - No añadir funcionalidades de fases posteriores del roadmap sin pedirlo.
 
+## Repositorio público (GitHub: `polmarza/afloat`)
+
+- Tras cada PR (o antes de abrirlo), revisa si cambian el `README.md`, la descripción del repo (about) y las etiquetas (topics), y actualízalos si hace falta: `gh repo edit polmarza/afloat --description "..." --add-topic x --remove-topic y`. Di al usuario qué has cambiado.
+- Es público: nunca subir `assets-src/` (licencia prohibe redistribuir), claves, tokens ni archivos `.env`.
+
 ## Flujo de cambios
 
 Para funcionalidades nuevas usa OpenSpec: `/opsx:propose` → revisión con el usuario → `/opsx:apply` → `/opsx:archive`. Mantén `docs/` y `openspec/specs/` al día con lo que se implemente.
